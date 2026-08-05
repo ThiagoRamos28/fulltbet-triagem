@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triagem diaria - fulltbet</title>
+<style>
+  :root {
+    color-scheme: dark light;
+    --bg: #0f1115;
+    --bg-card: #1a1d24;
+    --fg: #e8e9ec;
+    --fg-dim: #9aa0ab;
+    --border: #2a2e37;
+    --accent: #4da3ff;
+    --green: #34c77b;
+    --red: #ff5c5c;
+    --gold: #f2c94c;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f5f6f8;
+      --bg-card: #ffffff;
+      --fg: #14161a;
+      --fg-dim: #5b616c;
+      --border: #dde1e6;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 17px;
+    line-height: 1.4;
+    padding-bottom: 40px;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+    z-index: 10;
+  }
+  header h1 { margin: 0; font-size: 20px; }
+  header p { margin: 2px 0 0; color: var(--fg-dim); font-size: 14px; }
+  main { padding: 0 12px; }
+  section { margin-top: 22px; }
+  section h2 { font-size: 16px; margin: 0 0 4px; }
+  .ajuda, .rodape { color: var(--fg-dim); font-size: 13px; margin: 4px 0 10px; }
+  .lista { display: flex; flex-direction: column; gap: 8px; }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0;
+  }
+  .card summary {
+    list-style: none;
+    padding: 10px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .card summary::-webkit-details-marker { display: none; }
+  .hora { font-variant-numeric: tabular-nums; color: var(--fg-dim); font-size: 14px; min-width: 42px; }
+  .jogo { font-weight: 600; flex: 1 1 auto; min-width: 140px; }
+  .pais { color: var(--fg-dim); font-size: 13px; }
+  .badge {
+    font-size: 12px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .badge.v1 { color: var(--accent); border-color: var(--accent); }
+  .badge.obs { color: var(--fg-dim); }
+  .badge.both { color: var(--gold); border-color: var(--gold); }
+  .badge.q { color: var(--gold); border-color: var(--gold); }
+  .badge.viz { color: var(--fg-dim); }
+  .badge.s, .badge.t { color: var(--green); border-color: var(--green); }
+  .badge.evitar { color: var(--red); border-color: var(--red); }
+  .detalhe {
+    padding: 0 12px 12px;
+    color: var(--fg-dim);
+    font-size: 14px;
+    border-top: 1px solid var(--border);
+    margin-top: 2px;
+    padding-top: 8px;
+  }
+  .detalhe b { color: var(--fg); font-weight: 600; }
+  .vazio { color: var(--fg-dim); padding: 8px 0; font-size: 14px; }
+  .erro { color: var(--red); padding: 8px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Triagem - <span id="data-hoje"></span></h1>
+    <p>fulltbet - atualizado ao abrir a pagina</p>
+  </header>
+  <main>
+    <section id="lay0x1">
+      <h2>Lay 0x1</h2>
+      <p class="ajuda">Manda de todos: as 3 odds do Resultado da Partida e a linha do 0x1 (back e lay).</p>
+      <div id="lista-lay0x1" class="lista"><p class="vazio">Carregando...</p></div>
+    </section>
+    <section id="triagem">
+      <h2>Triagem HT/FT</h2>
+      <div id="lista-triagem" class="lista"><p class="vazio">Carregando...</p></div>
+      <p class="rodape">Hipoteses O, P, Q, S e T estao em validacao. Isto e registro, nao sinal de entrada.</p>
+    </section>
+  </main>
+  <script>
+    var SUPABASE_URL = "https://qfhzmvfaudnxnumlosmy.supabase.co";
+    var ANON_KEY = "sb_publishable_CbZOTQfv9WeRsKSFcGfFvA_I4e62k7K";
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function hojeBrasilia() {
+      var fmt = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit'
+      });
+      return fmt.format(new Date());
+    }
+
+    function horaDeNaive(s) {
+      // "timestamp without time zone" do Postgres, ja em hora local de Brasilia — nunca
+      // passar por new Date() aqui, o navegador reinterpretaria como UTC ou hora local dele.
+      if (!s) return '--:--';
+      var m = s.match(/T(d{2}):(d{2})/);
+      return m ? (m[1] + ':' + m[2]) : '--:--';
+    }
+
+    function horaDeTimestamptz(s) {
+      if (!s) return '--:--';
+      var d = new Date(s);
+      return d.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function decay(over, under) {
+      // odd justa a cada minuto, supondo 0x0 e taxa constante. So valida ate 15' — depois
+      // disso o decaimento uniforme fica pessimista demais (curva real medida em
+      // docs/2026-07-30-curva-de-odd-ao-vivo-st-gallen-zurich.md).
+      var p = (1 / over) / (1 / over + 1 / under);
+      var lam = -Math.log(1 - p);
+      return [5, 10, 15].map(function (t) {
+        return (1 / (1 - Math.exp(-lam * (45 - t) / 45))).toFixed(2);
+      });
+    }
+
+    function oddJusta(j) {
+      if (!j.odd_ht_over || !j.margem_ht) return null;
+      var under = 1 / (j.margem_ht - 1 / j.odd_ht_over);
+      if (!isFinite(under) || under <= 0) return null;
+      return decay(j.odd_ht_over, under);
+    }
+
+    async function buscar(tabela, hoje, extra) {
+      var params = new URLSearchParams({ select: '*', data: 'eq.' + hoje, order: 'horario_brasilia.asc' });
+      if (extra) { for (var k in extra) params.set(k, extra[k]); }
+      var res = await fetch(SUPABASE_URL + '/rest/v1/' + tabela + '?' + params.toString(), {
+        headers: { apikey: ANON_KEY, Authorization: 'Bearer ' + ANON_KEY }
+      });
+      if (!res.ok) throw new Error('Falha ao buscar ' + tabela + ': ' + res.status);
+      return res.json();
+    }
+
+    function badge(texto, classe) {
+      return '<span class="badge ' + classe + '">' + texto + '</span>';
+    }
+
+    function cardLay0x1(j) {
+      var badges = '';
+      if (j.passa_v1 && j.passa_i) badges += badge('&#9889; v1 + I', 'both');
+      else if (j.passa_v1) badges += badge('&#127919; v1', 'v1');
+      else if (j.passa_i) badges += badge('&#128300; I - so observar', 'obs');
+      return '<details class="card"><summary>' +
+        '<span class="hora">' + horaDeNaive(j.horario_brasilia) + '</span>' +
+        '<span class="jogo">' + esc(j.mandante) + ' x ' + esc(j.visitante) + '</span>' +
+        '<span class="pais">' + esc(j.pais || '-') + '</span>' +
+        badges +
+        '</summary><div class="detalhe">' +
+        'casa <b>' + (j.odd_casa_ft ?? '-') + '</b> &middot; vis <b>' + (j.odd_vis_ft ?? '-') + '</b> &middot; ' +
+        'over2.5 <b>' + (j.odd_over25 ?? '-') + '</b> &middot; H <b>' + (j.h_score != null ? Math.round(j.h_score) : '-') + '</b>' +
+        '</div></details>';
+    }
+
+    function cardTriagem(j) {
+      var badges = '';
+      if (j.flag_q) badges += badge('&#11088; Q', 'q');
+      else if (j.vizinhanca_q) badges += badge('perto da Q', 'viz');
+      if (j.flag_s) badges += badge('&#128994; Verde HT', 's');
+      if (j.flag_t) badges += badge('&#128994; Verde Largo', 't');
+      if (j.flag_p_baixo && j.lg_fora < 100) badges += badge('&#9940; Evitar', 'evitar');
+      var d = oddJusta(j);
+      var detalhe = 'over0.5HT <b>' + (j.odd_ht_over ?? '-') + '</b> &middot; LG casa <b>' +
+        (j.lg_casa != null ? Math.round(j.lg_casa) : '-') + '</b> &middot; LG fora <b>' +
+        (j.lg_fora != null ? Math.round(j.lg_fora) : '-') + '</b> &middot; H <b>' +
+        (j.h_score != null ? Math.round(j.h_score) : '-') + '</b>';
+      if (d) {
+        detalhe += '<br>justa 5' <b>' + d[0] + '</b> &middot; 10' <b>' + d[1] + '</b> &middot; 15' <b>' + d[2] + '</b>';
+      }
+      return '<details class="card"><summary>' +
+        '<span class="hora">' + horaDeTimestamptz(j.horario_brasilia) + '</span>' +
+        '<span class="jogo">' + esc(j.mandante) + ' x ' + esc(j.visitante) + '</span>' +
+        '<span class="pais">' + esc(j.pais || '-') + '</span>' +
+        badges +
+        '</summary><div class="detalhe">' + detalhe + '</div></details>';
+    }
+
+    async function montarSecao(id, tabela, extra, montarCard, vazioMsg) {
+      var el = document.getElementById(id);
+      try {
+        var hoje = hojeBrasilia();
+        var linhas = await buscar(tabela, hoje, extra);
+        if (!linhas.length) {
+          el.innerHTML = '<p class="vazio">' + vazioMsg + '</p>';
+          return;
+        }
+        el.innerHTML = linhas.map(montarCard).join('');
+      } catch (e) {
+        el.innerHTML = '<p class="erro">Erro ao carregar: ' + esc(e.message) + '</p>';
+      }
+    }
+
+    document.getElementById('data-hoje').textContent = hojeBrasilia().split('-').reverse().join('/');
+
+    montarSecao('lista-lay0x1', 'lay0x1_diario', null, cardLay0x1, 'Nenhum jogo passou nos filtros hoje (v1 e I).');
+    montarSecao('lista-triagem', 'triagem',
+      { or: '(vizinhanca_q.eq.true,flag_p_baixo.eq.true,flag_s.eq.true,flag_t.eq.true)' },
+      cardTriagem, 'Nenhum jogo no radar hoje.');
+
+    if (location.hash) {
+      var alvo = document.querySelector(location.hash);
+      if (alvo) alvo.scrollIntoView();
+    }
+  </script>
+</body>
+</html>
