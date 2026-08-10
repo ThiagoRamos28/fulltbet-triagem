@@ -234,10 +234,10 @@
 
     function cardTriagem(j) {
       var badges = '';
-      if (j.flag_q) badges += badge('estrela', 'Q', 'q');
-      else if (j.vizinhanca_q) badges += badge(null, 'perto da Q', 'viz');
-      if (j.flag_s) badges += badge('ponto', 'Verde HT', 's');
-      if (j.flag_t) badges += badge('ponto', 'Verde Largo', 't');
+      if (j.flag_q) badges += badge('estrela', 'Farol', 'q');
+      else if (j.vizinhanca_q) badges += badge(null, 'perto do Farol', 'viz');
+      if (j.flag_s) badges += badge('ponto', 'Sonar', 's');
+      if (j.flag_t) badges += badge('ponto', 'Bússola', 't');
       if (j.flag_p_baixo && j.lg_fora < 100) badges += badge('proibido', 'Evitar', 'evitar');
       var d = oddJusta(j);
       var detalhe = 'over0.5HT <b>' + (j.odd_ht_over ?? '-') + '</b> &middot; LG casa <b>' +
