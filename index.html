@@ -418,63 +418,6 @@
   .filtro .conf-full { display: inline-flex; }
   .filtro .conf-mini { display: none; }
 
-  /* ---------- filtro global por quantidade de sinais ----------
-     Mais presente que o filtro de estrelas (que é de uma seção só): este muda três seções de
-     uma vez, então precisa parecer um controle de página, não um detalhe de lista. */
-  .filtro-global {
-    max-width: 720px;
-    margin: 0 auto 18px;
-    padding: 11px 13px 12px;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    background: var(--panel);
-  }
-  .filtro-global[hidden] { display: none; }
-  .filtro-global .fg-tit {
-    font-size: 9.5px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--fg-faint);
-    margin-bottom: 8px;
-  }
-  .filtro-global .fg-botoes { display: flex; flex-wrap: wrap; gap: 6px; }
-  .filtro-global button {
-    font-family: inherit;
-    font-size: 11.5px;
-    font-weight: 600;
-    color: var(--fg-dim);
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 6px 12px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: baseline;
-    gap: 5px;
-    transition: color 120ms var(--ease-out), border-color 120ms var(--ease-out), background 120ms var(--ease-out);
-  }
-  .filtro-global button:hover { color: var(--fg); border-color: color-mix(in srgb, var(--fg-faint) 50%, var(--line)); }
-  .filtro-global button:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
-  .filtro-global button[aria-pressed="true"] {
-    color: var(--info);
-    border-color: color-mix(in srgb, var(--info) 55%, var(--line));
-    background: color-mix(in srgb, var(--info) 12%, transparent);
-  }
-  /* --fg-dim e não --fg-faint: medido sobre --panel-2 (o fundo do botão inativo), o faint dá
-     4,48:1 e passa raspando por baixo do mínimo de 4,5. O dim resolve sem clarear nada. */
-  .filtro-global .fg-n { color: var(--fg-dim); font-size: 10px; font-weight: 500; }
-  .filtro-global button[aria-pressed="true"] .fg-n { color: color-mix(in srgb, var(--info) 75%, var(--fg)); }
-  /* A taxa histórica de cada degrau é o motivo do controle existir — sem ela o filtro é só
-     "mostrar menos", com ela é "mostrar os melhores". Medida em 2.089 jogos, atualizada à mão
-     apenas quando remedirmos (não é a régua do Bússola, que se atualiza sozinha). */
-  .filtro-global .fg-nota {
-    margin: 9px 0 0;
-    font-size: 10.5px;
-    line-height: 1.5;
-    color: var(--fg-faint);
-  }
-  .filtro-global .fg-nota b { color: var(--fg-dim); font-weight: 600; }
-
   /* ---------- filtro por estrelas ---------- */
   .filtro {
     display: flex;
@@ -748,11 +691,6 @@
       <a href="#sonar">Sonar</a>
       <a href="#bussola">Bússola</a>
     </nav>
-
-    <!-- Filtro global de sinais. Fica FORA do <header> grudado de propósito: o header já mede
-         117px e é a única coisa que ocupa tela o tempo todo (lição de 04/09). Este controle é de
-         usar uma vez e esquecer, como o menu de atalho logo acima. -->
-    <div class="filtro-global" id="filtro-global" role="group" aria-label="Filtrar por quantidade de sinais" hidden></div>
 
     <section id="lay0x1">
       <div class="sec-head"><h2>Lay 0×1 <span class="n" id="n-lay0x1"></span></h2></div>
@@ -1319,11 +1257,6 @@
       // Estrelas na linha do jogo (pedido do usuário em 05/09: "ia ficar melhor ainda se
       // ficasse na linha do jogo"). Só na Bússola — a régua foi MEDIDA dentro da população
       // Bússola, e a taxa de cada degrau não vale fora dela. Ver a nota no cabeçalho da seção.
-      // Quantos dos três sinais de over este jogo dispara — é o que o filtro global lê. Vem do
-      // próprio registro da triagem (o select da seção já traz `*`), não de contagem na tela.
-      var attrSinais = (j.flag_q !== undefined)
-        ? ' data-sinais="' + sinaisDe(j) + '" data-game="' + esc(String(j.game_id)) + '"' : '';
-
       var estrelasLinha = '', attrEstrelas = '';
       if (opts.estrelas) {
         var f = estrelasPara(soma);
@@ -1332,7 +1265,7 @@
           attrEstrelas = ' data-estrelas="' + f.n + '"';
         }
       }
-      return '<details class="card ' + s.cls + '"' + attrEstrelas + attrSinais + '><summary>' +
+      return '<details class="card ' + s.cls + '"' + attrEstrelas + '><summary>' +
         '<span class="hora">' + horaDeTimestamptz(j.horario_brasilia) + '</span>' +
         bandeiraHtml(j.pais) +
         '<span class="jogo">' + esc(j.mandante) + ' × ' + esc(j.visitante) + '</span>' +
@@ -1353,111 +1286,6 @@
       return cardAoVivo(j, { estrelas: true, perfil: true, confronto: true, placarFn: placarTexto });
     };
 
-    // ---------- filtro global por quantidade de sinais ----------
-    // Pedido do usuário em 05/09: *"está ficando muitos jogos, estou ficando doido"*. Medido, o
-    // problema não era o número de jogos e sim o mesmo jogo repetido: 322 cards para 132 jogos
-    // (2,4 cards por jogo), com 32 jogos aparecendo em quatro seções ou mais.
-    //
-    // E a repetição, medida, é justamente o sinal mais forte da página. Em 2.089 jogos com
-    // resultado, o over 1.5 FT sobe em escada limpa com a quantidade de sinais:
-    //
-    //     nenhum  71,9% (n=1191) · 1 sinal 77,9% (n=222)
-    //     2 sinais 83,2% (n=577) · 3 sinais 86,9% (n=99)   → z≈3,2 entre as pontas
-    //
-    // Por isso o controle não é só "mostrar menos": cada degrau anuncia a própria taxa.
-    //
-    // ⚠️ Vale só para Farol, Sonar e Bússola — as três preveem gol e foi nelas que a medida foi
-    // feita. As duas seções de Lay ficam de fora porque o evento delas é outro (casa não perder,
-    // não terminar 0×1): um jogo pode ser ótimo para Lay Visitante sem nenhum sinal de over, e
-    // escondê-lo por causa disso seria filtrar por um critério que nunca foi medido ali.
-    var FILTRO_SINAIS = 0;
-    var SECOES_SINAL = ['farol', 'sonar', 'bussola'];
-    var TAXA_SINAIS = { 0: '71,9%', 1: '77,9%', 2: '83,2%', 3: '86,9%' };
-
-    function sinaisDe(j) {
-      return (j.flag_q ? 1 : 0) + (j.flag_s ? 1 : 0) + (j.flag_t ? 1 : 0);
-    }
-
-    // Um card é escondido se QUALQUER filtro ativo o reprova. O filtro de estrelas continua
-    // valendo dentro da Bússola, então os dois se compõem — daí a decisão ser calculada aqui, num
-    // lugar só, em vez de cada filtro mexer no `hidden` por conta própria e um desfazer o outro.
-    function aplicarFiltros() {
-      SECOES_SINAL.concat(['layvis', 'lay0x1']).forEach(function (sec) {
-        var lista = document.getElementById('lista-' + sec);
-        if (!lista) return;
-        var usaSinal = SECOES_SINAL.indexOf(sec) > -1;
-        var cards = lista.querySelectorAll('.card');
-        var visiveis = 0;
-        cards.forEach(function (c) {
-          var passaSinal = !usaSinal || Number(c.getAttribute('data-sinais') || 0) >= FILTRO_SINAIS;
-          var passaEstrela = sec !== 'bussola' ||
-            Number(c.getAttribute('data-estrelas') || 0) >= FILTRO_ESTRELAS;
-          var mostra = passaSinal && passaEstrela;
-          c.hidden = !mostra;
-          if (mostra) visiveis++;
-        });
-
-        var aviso = lista.querySelector('.vazio-filtro');
-        if (cards.length && !visiveis) {
-          if (!aviso) {
-            aviso = document.createElement('p');
-            aviso.className = 'vazio vazio-filtro';
-            lista.appendChild(aviso);
-          }
-          aviso.textContent = 'Nenhum jogo desta seção passa no filtro de agora.';
-        } else if (aviso) {
-          aviso.remove();
-        }
-
-        // O contador do título passa a mostrar "visíveis de total" enquanto há filtro — sem isso
-        // o número ao lado do nome da seção contradiz a lista logo abaixo.
-        var cont = document.getElementById('n-' + sec);
-        if (cont) {
-          cont.textContent = !cards.length ? ''
-            : (visiveis < cards.length ? visiveis + ' de ' + cards.length : String(cards.length));
-        }
-      });
-    }
-
-    function montarFiltroGlobal(porSinal) {
-      var box = document.getElementById('filtro-global');
-      var total = porSinal.reduce(function (a, b) { return a + b; }, 0);
-      if (!total) { box.hidden = true; box.innerHTML = ''; return; }
-
-      var acumulado = function (n) {
-        var t = 0;
-        for (var i = n; i <= 3; i++) t += porSinal[i];
-        return t;
-      };
-      // Sem botão de "1 ou mais": um jogo só entra nestas três listas se disparou a flag da
-      // seção, então TODO card já tem ao menos um sinal e o degrau 1 devolve exatamente o mesmo
-      // conjunto que "Todos" (conferido: 97 e 97). Botão que não muda nada é ruído.
-      var rotulo = { 0: 'Todos', 2: '2 ou mais', 3: 'Os 3' };
-      var html = '<div class="fg-tit">Sinais no mesmo jogo · Farol, Sonar e Bússola</div><div class="fg-botoes">';
-      [0, 2, 3].forEach(function (n) {
-        var q = n === 0 ? total : acumulado(n);
-        if (n > 0 && (!q || q === total)) return;
-        html += '<button type="button" data-min="' + n + '" aria-pressed="' + (FILTRO_SINAIS === n) + '">' +
-          rotulo[n] + '<span class="fg-n">' + q + '</span></button>';
-      });
-      html += '</div><p class="fg-nota">Quanto mais sinais o mesmo jogo dispara, maior a taxa histórica de ' +
-        '<b>over 1.5 FT</b>: ' + TAXA_SINAIS[0] + ' sem sinal · ' + TAXA_SINAIS[1] + ' com 1 · ' +
-        TAXA_SINAIS[2] + ' com 2 · <b>' + TAXA_SINAIS[3] + ' com os 3</b> (medido em 2.089 jogos). ' +
-        'Não muda as duas seções de Lay — o evento delas é outro.</p>';
-      box.innerHTML = html;
-      box.hidden = false;
-
-      box.querySelectorAll('button').forEach(function (b) {
-        b.addEventListener('click', function () {
-          FILTRO_SINAIS = Number(b.getAttribute('data-min'));
-          box.querySelectorAll('button').forEach(function (o) {
-            o.setAttribute('aria-pressed', String(Number(o.getAttribute('data-min')) === FILTRO_SINAIS));
-          });
-          aplicarFiltros();
-        });
-      });
-    }
-
     // ---------- filtro por estrelas (só a Bússola) ----------
     // Filtra no cliente, não numa query nova: as linhas do dia já estão na memória e o degrau de
     // estrela não é coluna do banco — sai da soma dos LG cruzada com a régua, que também já está
@@ -1469,10 +1297,28 @@
     // dia inteiro, que é o número certo pra acompanhar resultado.
     var FILTRO_ESTRELAS = 0;
 
-    // Esconder card virou responsabilidade de `aplicarFiltros()`, que decide com os DOIS filtros
-    // ao mesmo tempo. Antes cada um mexia no `hidden` por conta própria e o último a rodar
-    // desfazia o outro — filtrar 5★ e depois "3 sinais" trazia de volta jogos de 1★.
-    function aplicarFiltroBussola() { aplicarFiltros(); }
+    function aplicarFiltroBussola() {
+      var lista = document.getElementById('lista-bussola');
+      var cards = lista.querySelectorAll('.card');
+      var visiveis = 0;
+      cards.forEach(function (c) {
+        var n = Number(c.getAttribute('data-estrelas') || 0);
+        var mostra = n >= FILTRO_ESTRELAS;
+        c.hidden = !mostra;
+        if (mostra) visiveis++;
+      });
+      var aviso = lista.querySelector('.vazio-filtro');
+      if (cards.length && !visiveis) {
+        if (!aviso) {
+          aviso = document.createElement('p');
+          aviso.className = 'vazio vazio-filtro';
+          lista.appendChild(aviso);
+        }
+        aviso.textContent = 'Nenhum jogo da Bússola com ' + FILTRO_ESTRELAS + ' estrelas ou mais hoje.';
+      } else if (aviso) {
+        aviso.remove();
+      }
+    }
 
     function montarFiltroBussola(linhas) {
       var box = document.getElementById('filtro-bussola');
@@ -1593,22 +1439,6 @@
             'Nenhum jogo na Bússola nesse dia.', 'placar-bussola', dataRef, overFt,
             function (linhas) { montarFiltroBussola(linhas); aplicarFiltroBussola(); }),
         ]);
-        // O filtro global só pode ser montado depois das três seções, porque conta jogos ÚNICOS
-        // — um jogo que dispara Farol e Bússola aparece em duas listas e não pode ser contado
-        // duas vezes. Daí varrer os cards já renderizados e deduplicar por game_id.
-        var vistos = {}, porSinal = [0, 0, 0, 0];
-        SECOES_SINAL.forEach(function (sec) {
-          var lista = document.getElementById('lista-' + sec);
-          if (!lista) return;
-          lista.querySelectorAll('.card[data-sinais]').forEach(function (c) {
-            var id = c.getAttribute('data-game');
-            if (!id || vistos[id]) return;
-            vistos[id] = true;
-            porSinal[Number(c.getAttribute('data-sinais') || 0)]++;
-          });
-        });
-        montarFiltroGlobal(porSinal);
-        aplicarFiltros();
       } finally {
         elMain.removeAttribute('aria-busy');
         btnPrev.disabled = (indiceAtual === 0);
