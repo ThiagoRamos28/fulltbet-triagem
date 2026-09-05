@@ -28,6 +28,7 @@
     --pend: #f5b13d;
     --pend-dim: #3a2c0e;
     --info: #4fb6ff;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   }
   @media (prefers-color-scheme: light) {
     :root {
@@ -137,9 +138,14 @@
     border: 1px solid var(--line);
     border-radius: 999px;
     padding: 5px 10px;
-    transition: color .15s, border-color .15s;
+    display: inline-block;
+    transition: color 150ms var(--ease-out), border-color 150ms var(--ease-out), transform 120ms var(--ease-out);
   }
-  nav.jump a:hover, nav.jump a:focus-visible { color: var(--fg); border-color: var(--fg-faint); }
+  @media (hover: hover) and (pointer: fine) {
+    nav.jump a:hover { color: var(--fg); border-color: var(--fg-faint); }
+  }
+  nav.jump a:focus-visible { color: var(--fg); border-color: var(--fg-faint); }
+  nav.jump a:active { transform: scale(0.94); }
 
   .dia-nav {
     display: flex;
@@ -158,9 +164,13 @@
     font-size: 15px;
     line-height: 1;
     cursor: pointer;
+    transition: border-color 150ms var(--ease-out), transform 120ms var(--ease-out), opacity 150ms var(--ease-out);
   }
   .dia-nav button:disabled { opacity: .3; cursor: default; }
-  .dia-nav button:not(:disabled):hover { border-color: var(--fg-faint); }
+  @media (hover: hover) and (pointer: fine) {
+    .dia-nav button:not(:disabled):hover { border-color: var(--fg-faint); }
+  }
+  .dia-nav button:not(:disabled):active { transform: scale(0.9); }
   .dia-nav .rotulo {
     font-size: 12px;
     font-weight: 600;
@@ -253,9 +263,27 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    transition: transform 120ms var(--ease-out);
   }
   .card summary::-webkit-details-marker { display: none; }
   .card summary:focus-visible { outline: 2px solid var(--info); outline-offset: -2px; border-radius: 8px; }
+  .card summary:active { transform: scale(0.995); }
+
+  /* Abrir/fechar animado — <details> nativo troca de estado sem transição (o navegador só
+     mostra/esconde). O truque: um wrapper com grid-template-rows 0fr→1fr, controlado pelo
+     seletor [open]. O !important derruba a regra padrão do UA (`details:not([open]) >
+     *:not(summary) { display:none }`), que senão venceria por especificidade e voltaria a
+     esconder o conteúdo de golpe. */
+  .card > .detalhe-wrap {
+    display: grid !important;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 220ms var(--ease-out);
+  }
+  .card[open] > .detalhe-wrap { grid-template-rows: 1fr; }
+  .card > .detalhe-wrap > .detalhe { overflow: hidden; }
+  @media (prefers-reduced-motion: reduce) {
+    .card > .detalhe-wrap { transition: none; }
+  }
 
   .hora { color: var(--fg-dim); font-size: 12px; min-width: 40px; flex: 0 0 auto; }
   .confronto { flex: 1 1 auto; min-width: 0; }
@@ -494,9 +522,9 @@
         '<span class="pais">' + esc(j.pais || '-') + '</span></span>' +
         badges +
         '<span class="status ' + s.cls + '">' + s.texto + (placar ? ' <span class="placar-num">' + placar + '</span>' : '') + '</span>' +
-        '</summary><div class="detalhe">' +
+        '</summary><div class="detalhe-wrap"><div class="detalhe">' +
         '<div class="linha">casa <b>' + (j.odd_casa_ft ?? '-') + '</b> · vis <b>' + (j.odd_vis_ft ?? '-') + '</b> · over2.5 <b>' + (j.odd_over25 ?? '-') + '</b> · H <b>' + (j.h_score != null ? Math.round(j.h_score) : '-') + '</b></div>' +
-        '</div></details>';
+        '</div></div></details>';
     }
 
     function cardLayVis(j) {
@@ -508,9 +536,9 @@
         '<span class="confronto"><span class="jogo">' + esc(j.mandante) + ' × ' + esc(j.visitante) + '</span>' +
         '<span class="pais">' + esc(j.pais || '-') + '</span></span>' +
         '<span class="status ' + s.cls + '">' + s.texto + (placar ? ' <span class="placar-num">' + placar + '</span>' : '') + '</span>' +
-        '</summary><div class="detalhe">' +
+        '</summary><div class="detalhe-wrap"><div class="detalhe">' +
         '<div class="linha">odd casa <b>' + (j.odds_home ?? '-') + '</b> · H <b>' + (j.h_score != null ? Math.round(j.h_score) : '-') + '</b> · LG casa <b>' + (j.lg_casa != null ? Math.round(j.lg_casa) : '-') + '</b> · LG fora <b>' + (j.lg_fora != null ? Math.round(j.lg_fora) : '-') + '</b>' + (soma != null ? ' · LG total <b>' + Math.round(soma) + '</b>' : '') + '</div>' +
-        '</div></details>';
+        '</div></div></details>';
     }
 
     // ---------- régua de confiança do Bússola (soma dos LG-Score → estrelas) ----------
@@ -568,7 +596,7 @@
         '<span class="confronto"><span class="jogo">' + esc(j.mandante) + ' × ' + esc(j.visitante) + '</span>' +
         '<span class="pais">' + esc(j.pais || '-') + '</span></span>' +
         '<span class="status ' + s.cls + '">' + s.texto + (placar ? ' <span class="placar-num">' + placar + '</span>' : '') + '</span>' +
-        '</summary><div class="detalhe">' + detalhe + '</div></details>';
+        '</summary><div class="detalhe-wrap"><div class="detalhe">' + detalhe + '</div></div></details>';
     }
     var placarHtTexto = function (j) {
       return (j.gols_casa_ht == null || j.gols_visitante_ht == null) ? null : j.gols_casa_ht + '×' + j.gols_visitante_ht;
