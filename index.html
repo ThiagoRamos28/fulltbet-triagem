@@ -703,6 +703,7 @@
       <div class="sec-head"><h2>Lay Visitante Favorito <span class="n" id="n-layvis"></span></h2></div>
       <p class="ajuda">Pré-jogo, 15min antes do apito. Casa favorita (odds até 2,00) — lay no visitante, entra na virada do apito e segura até o fim. Evento é 1X: bateu quando a casa não perde.</p>
       <div class="placar" id="placar-layvis" hidden></div>
+      <div class="filtro" id="filtro-layvis" role="group" aria-label="Filtrar o Lay Visitante por estrelas de confiança" hidden></div>
       <div id="lista-layvis" class="lista"><p class="carregando">Carregando…</p></div>
     </section>
 
@@ -980,18 +981,23 @@
       var s = statusDe(j);
       var placar = placarTexto(j);
       var soma = (j.lg_casa != null && j.lg_fora != null) ? (Number(j.lg_casa) + Number(j.lg_fora)) : null;
-      return '<details class="card ' + s.cls + '"><summary>' +
+      var fx = estrelasPara('layvis', valorDaRegua('layvis', j));
+      var estrelasLinha = fx
+        ? confHtml(fx.n, fx.n + ' de 5 estrelas — histórico ' + fx.taxa + '% de ' + fx.evento) : '';
+      var attrEstrelas = fx ? ' data-estrelas="' + fx.n + '"' : '';
+      return '<details class="card ' + s.cls + '"' + attrEstrelas + '><summary>' +
         '<span class="hora">' + horaDeTimestamptz(j.horario_brasilia) + '</span>' +
         bandeiraHtml(j.pais) +
         '<span class="jogo">' + esc(j.mandante) + ' × ' + esc(j.visitante) + '</span>' +
         confrontoHtml(j) +
+        estrelasLinha +
         '<span class="status ' + s.cls + '">' + s.texto + (placar ? ' <span class="placar-num">' + placar + '</span>' : '') + '</span>' +
         '</summary><div class="detalhe-wrap"><div class="detalhe">' +
         '<div class="linha">odd casa <b>' + (j.odds_home ?? '-') + '</b> · H <b>' + (j.h_score != null ? Math.round(j.h_score) : '-') + '</b> · LG casa <b>' + (j.lg_casa != null ? Math.round(j.lg_casa) : '-') + '</b> · LG fora <b>' + (j.lg_fora != null ? Math.round(j.lg_fora) : '-') + '</b>' + (soma != null ? ' · LG total <b>' + Math.round(soma) + '</b>' : '') + '</div>' +
+        // Estrela própria desde 05/09 (migração 0043), graduada pela ODD DA CASA e medida contra o
+        // evento DESTA seção — casa não perder —, nunca pela régua do Bússola, que mede over 1.5 FT.
+        estrelasHtml('layvis', j) +
         metaHtml(j) +
-        // Sem estrelas aqui, de propósito: a régua é do Bússola (over 1.5 FT) e o evento desta
-        // seção é outro (a casa não perder). O perfil, sim — ele é descritivo e vale em qualquer
-        // recorte.
         perfilHtml(j) +
         '</div></div></details>';
     }
@@ -999,20 +1005,52 @@
     // ---------- régua de confiança do Bússola (soma dos LG-Score → estrelas) ----------
     // Tabela pequena (5 linhas), atualizada 1x/dia pelo Workflow 05 — busca uma vez só, não por
     // seção. Ver docs/2026-09-02-regua-confianca-estrelas-bussola.md.
+    // Desde 05/09 (migração 0043) existe UMA RÉGUA POR SEÇÃO, e só entraram as duas cujas escadas
+    // se sustentaram na medida:
+    //
+    //   bussola · LG somado (lg_casa+lg_fora) → over 1.5 FT · 80,3% a 95,3%
+    //   layvis  · odd da casa                 → casa não perde · 77,7% a 92,9% (z=4,19)
+    //
+    // Sonar, Farol e Lay 0×1 ficaram DE FORA de propósito: escada invertida ou z fraco demais para
+    // a amostra de hoje (~420 jogos por seção, que viram ~85 por degrau). Estrela que não separa
+    // promete mais do que entrega. Voltam a ser candidatas quando a base crescer.
+    //
+    // A tabela diz qual campo gradua e em que sentido, então acrescentar uma régua nova amanhã é
+    // inserir linha no banco — não mexer neste arquivo.
     var REGUA = null;
     async function buscarRegua() {
       try {
-        var res = await fetch(SUPABASE_URL + '/rest/v1/regua_confianca?select=estrelas,piso,teto,n,taxa&order=estrelas.asc', {
+        var res = await fetch(SUPABASE_URL + '/rest/v1/regua_confianca?select=secao,campo,ordem,evento,estrelas,piso,teto,n,taxa&order=estrelas.asc', {
           headers: { apikey: ANON_KEY, Authorization: 'Bearer ' + ANON_KEY }
         });
-        REGUA = res.ok ? await res.json() : [];
-      } catch (e) { REGUA = []; }
+        var linhas = res.ok ? await res.json() : [];
+        REGUA = {};
+        linhas.forEach(function (r) { (REGUA[r.secao] = REGUA[r.secao] || []).push(r); });
+      } catch (e) { REGUA = {}; }
     }
-    function estrelasPara(soma) {
-      if (soma == null || !REGUA || !REGUA.length) return null;
-      var faixa = REGUA.find(function (r) { return soma >= r.piso && (r.teto == null || soma < r.teto); });
+
+    // `valor` já vem no campo que aquela régua usa (LG somado na Bússola, odd da casa no Lay).
+    function estrelasPara(secao, valor) {
+      if (valor == null || !REGUA || !REGUA[secao]) return null;
+      var faixa = REGUA[secao].find(function (r) {
+        return Number(valor) >= Number(r.piso) && (r.teto == null || Number(valor) < Number(r.teto));
+      });
       if (!faixa) return null;
-      return { n: faixa.estrelas, taxa: Math.round(faixa.taxa * 100), amostra: faixa.n };
+      return {
+        n: faixa.estrelas,
+        taxa: Math.round(faixa.taxa * 100),
+        amostra: faixa.n,
+        evento: faixa.evento
+      };
+    }
+
+    // Cada seção sabe de onde tirar o número que a régua dela gradua.
+    function valorDaRegua(secao, j) {
+      if (secao === 'bussola') {
+        return (j.lg_casa != null && j.lg_fora != null) ? (Number(j.lg_casa) + Number(j.lg_fora)) : null;
+      }
+      if (secao === 'layvis') return j.odds_home != null ? Number(j.odds_home) : null;
+      return null;
     }
     // Fileira de 5 estrelas desenhada em SVG. `titulo` vira o title/aria-label — na linha do
     // jogo a fileira é o único texto do indicador, então ela precisa se anunciar sozinha.
@@ -1041,11 +1079,14 @@
         '<span class="conf-full">' + fileira + '</span>' +
         '<span class="conf-mini">' + mini + '</span></span>';
     }
-    function estrelasHtml(soma) {
-      var f = estrelasPara(soma);
+    // O nome do evento vem da tabela, não escrito aqui: a régua da Bússola mede over 1.5 FT e a do
+    // Lay Visitante mede "casa não perde". Chumbar o texto faria a linha do Lay mentir.
+    function estrelasHtml(secao, j) {
+      var f = estrelasPara(secao, valorDaRegua(secao, j));
       if (!f) return '';
       return '<div class="linha">' + confHtml(f.n, f.n + ' de 5 estrelas') +
-        ' <span style="color:var(--fg-dim)">histórico ' + f.taxa + '% de over 1.5 FT (n=' + f.amostra + ')</span></div>';
+        ' <span style="color:var(--fg-dim)">histórico ' + f.taxa + '% de ' + esc(f.evento) +
+        ' (n=' + f.amostra + ')</span></div>';
     }
 
     // ---------- perfil ofensivo/defensivo (migração 0040) ----------
@@ -1250,18 +1291,18 @@
       if (d) {
         detalhe += '<div class="linha">odd justa 5\' <b>' + d[0] + '</b> · 10\' <b>' + d[1] + '</b> · 15\' <b>' + d[2] + '</b></div>';
       }
-      if (opts.estrelas) detalhe += estrelasHtml(soma);
+      if (opts.regua) detalhe += estrelasHtml(opts.regua, j);
       detalhe += metaHtml(j);
       if (opts.perfil) detalhe += perfilHtml(j);
 
-      // Estrelas na linha do jogo (pedido do usuário em 05/09: "ia ficar melhor ainda se
-      // ficasse na linha do jogo"). Só na Bússola — a régua foi MEDIDA dentro da população
-      // Bússola, e a taxa de cada degrau não vale fora dela. Ver a nota no cabeçalho da seção.
+      // Estrelas na linha do jogo. `opts.regua` diz QUAL régua usar — só as seções que têm uma
+      // medida recebem estrela, e a taxa exibida é a do evento daquela seção. Uma seção sem régua
+      // simplesmente não passa a opção e continua sem estrela nenhuma.
       var estrelasLinha = '', attrEstrelas = '';
-      if (opts.estrelas) {
-        var f = estrelasPara(soma);
+      if (opts.regua) {
+        var f = estrelasPara(opts.regua, valorDaRegua(opts.regua, j));
         if (f) {
-          estrelasLinha = confHtml(f.n, f.n + ' de 5 estrelas — histórico ' + f.taxa + '% de over 1.5 FT');
+          estrelasLinha = confHtml(f.n, f.n + ' de 5 estrelas — histórico ' + f.taxa + '% de ' + f.evento);
           attrEstrelas = ' data-estrelas="' + f.n + '"';
         }
       }
@@ -1283,30 +1324,36 @@
     var cardFarol = function (j) { return cardAoVivo(j, { perfil: true, confronto: true, placarFn: placarHtTexto }); };
     var cardSonar = function (j) { return cardAoVivo(j, { perfil: true, confronto: true, placarFn: placarHtTexto }); };
     var cardBussola = function (j) {
-      return cardAoVivo(j, { estrelas: true, perfil: true, confronto: true, placarFn: placarTexto });
+      return cardAoVivo(j, { regua: 'bussola', perfil: true, confronto: true, placarFn: placarTexto });
     };
 
-    // ---------- filtro por estrelas (só a Bússola) ----------
+    // ---------- filtro por estrelas, uma instância por seção com régua ----------
     // Filtra no cliente, não numa query nova: as linhas do dia já estão na memória e o degrau de
-    // estrela não é coluna do banco — sai da soma dos LG cruzada com a régua, que também já está
-    // carregada. Recarregar do servidor pra esconder card seria viagem à toa.
+    // estrela não é coluna do banco — sai do campo graduador cruzado com a régua, que também já
+    // está carregada. Recarregar do servidor pra esconder card seria viagem à toa.
     //
     // O filtro é "pelo menos N estrelas", não "exatamente N": a régua é uma escada (quanto mais
     // estrela, maior a taxa histórica), então o que o usuário quer dizer com 4★ é "4 ou 5".
     // Os botões escondem os cards em vez de removê-los — o placar da seção continua contando o
     // dia inteiro, que é o número certo pra acompanhar resultado.
-    var FILTRO_ESTRELAS = 0;
+    //
+    // Desde 05/09 são DUAS seções com régua (bussola e layvis), então o estado é por seção: filtrar
+    // 5★ na Bússola não pode mexer no Lay, que tem outra régua e outro evento.
+    var FILTRO_ESTRELAS = { bussola: 0, layvis: 0 };
 
-    function aplicarFiltroBussola() {
-      var lista = document.getElementById('lista-bussola');
+    function aplicarFiltroEstrelas(secao) {
+      var lista = document.getElementById('lista-' + secao);
+      if (!lista) return;
+      var min = FILTRO_ESTRELAS[secao] || 0;
       var cards = lista.querySelectorAll('.card');
       var visiveis = 0;
       cards.forEach(function (c) {
         var n = Number(c.getAttribute('data-estrelas') || 0);
-        var mostra = n >= FILTRO_ESTRELAS;
+        var mostra = n >= min;
         c.hidden = !mostra;
         if (mostra) visiveis++;
       });
+
       var aviso = lista.querySelector('.vazio-filtro');
       if (cards.length && !visiveis) {
         if (!aviso) {
@@ -1314,38 +1361,49 @@
           aviso.className = 'vazio vazio-filtro';
           lista.appendChild(aviso);
         }
-        aviso.textContent = 'Nenhum jogo da Bússola com ' + FILTRO_ESTRELAS + ' estrelas ou mais hoje.';
+        aviso.textContent = 'Nenhum jogo desta seção com ' + min + ' estrelas ou mais hoje.';
       } else if (aviso) {
         aviso.remove();
       }
+
+      // Enquanto há filtro, o contador do título mostra "11 de 94" — senão ele contradiz a lista
+      // logo abaixo.
+      var cont = document.getElementById('n-' + secao);
+      if (cont) {
+        cont.textContent = !cards.length ? ''
+          : (visiveis < cards.length ? visiveis + ' de ' + cards.length : String(cards.length));
+      }
     }
 
-    function montarFiltroBussola(linhas) {
-      var box = document.getElementById('filtro-bussola');
-      // Sem régua carregada não há degrau pra filtrar — melhor não desenhar o controle do que
-      // desenhar um que não separa nada.
-      if (!linhas.length || !REGUA || !REGUA.length) { box.hidden = true; box.innerHTML = ''; return; }
+    function montarFiltroEstrelas(secao, linhas) {
+      var box = document.getElementById('filtro-' + secao);
+      if (!box) return;
+      // Sem régua para esta seção não há degrau pra filtrar — melhor não desenhar o controle do
+      // que desenhar um que não separa nada.
+      if (!linhas.length || !REGUA || !REGUA[secao] || !REGUA[secao].length) {
+        box.hidden = true; box.innerHTML = ''; return;
+      }
 
       var porDegrau = [0, 0, 0, 0, 0, 0];
       linhas.forEach(function (j) {
-        var soma = (j.lg_casa != null && j.lg_fora != null) ? (Number(j.lg_casa) + Number(j.lg_fora)) : null;
-        var f = estrelasPara(soma);
+        var f = estrelasPara(secao, valorDaRegua(secao, j));
         if (f) porDegrau[f.n]++;
       });
-      // Quantos jogos têm PELO MENOS n estrelas (é o que o botão promete).
       var acumulado = function (n) {
         var t = 0;
         for (var i = n; i <= 5; i++) t += porDegrau[i];
         return t;
       };
 
+      var atual = FILTRO_ESTRELAS[secao] || 0;
       var html = '<span class="rot">Confiança</span>' +
-        '<button type="button" data-min="0" aria-pressed="' + (FILTRO_ESTRELAS === 0) + '">Todas' +
+        '<button type="button" data-min="0" aria-pressed="' + (atual === 0) + '">Todas' +
         ' <span class="contagem">' + linhas.length + '</span></button>';
       [3, 4, 5].forEach(function (n) {
         var q = acumulado(n);
-        if (!q) return;   // degrau sem jogo hoje: botão que só decepciona
-        html += '<button type="button" data-min="' + n + '" aria-pressed="' + (FILTRO_ESTRELAS === n) + '"' +
+        // Degrau sem jogo hoje, ou que devolve a lista inteira, vira botão que só decepciona.
+        if (!q || q === linhas.length) return;
+        html += '<button type="button" data-min="' + n + '" aria-pressed="' + (atual === n) + '"' +
           ' aria-label="' + n + ' estrelas ou mais">' + confHtml(n, n + '★ ou mais') +
           '<span class="contagem">' + q + '</span></button>';
       });
@@ -1354,11 +1412,11 @@
 
       box.querySelectorAll('button').forEach(function (b) {
         b.addEventListener('click', function () {
-          FILTRO_ESTRELAS = Number(b.getAttribute('data-min'));
+          FILTRO_ESTRELAS[secao] = Number(b.getAttribute('data-min'));
           box.querySelectorAll('button').forEach(function (o) {
-            o.setAttribute('aria-pressed', String(Number(o.getAttribute('data-min')) === FILTRO_ESTRELAS));
+            o.setAttribute('aria-pressed', String(Number(o.getAttribute('data-min')) === FILTRO_ESTRELAS[secao]));
           });
-          aplicarFiltroBussola();
+          aplicarFiltroEstrelas(secao);
         });
       });
     }
@@ -1430,14 +1488,15 @@
           montarSecao('lista-lay0x1', 'lay0x1_diario', null, cardLay0x1,
             'Nenhum jogo passou nos filtros nesse dia (v1 e I).', 'placar-lay0x1', dataRef),
           montarSecao('lista-layvis', 'lay_visitante_diario', null, cardLayVis,
-            'Nenhum jogo passou no recorte nesse dia.', 'placar-layvis', dataRef),
+            'Nenhum jogo passou no recorte nesse dia.', 'placar-layvis', dataRef, null,
+            function (linhas) { montarFiltroEstrelas('layvis', linhas); aplicarFiltroEstrelas('layvis'); }),
           montarSecao('lista-farol', 'triagem', { flag_q: 'eq.true' }, cardFarol,
             'Nenhum jogo no Farol nesse dia.', 'placar-farol', dataRef, overHt),
           montarSecao('lista-sonar', 'triagem', { flag_s: 'eq.true' }, cardSonar,
             'Nenhum jogo no Sonar nesse dia.', 'placar-sonar', dataRef, overHt),
           montarSecao('lista-bussola', 'triagem', { flag_t: 'eq.true' }, cardBussola,
             'Nenhum jogo na Bússola nesse dia.', 'placar-bussola', dataRef, overFt,
-            function (linhas) { montarFiltroBussola(linhas); aplicarFiltroBussola(); }),
+            function (linhas) { montarFiltroEstrelas('bussola', linhas); aplicarFiltroEstrelas('bussola'); }),
         ]);
       } finally {
         elMain.removeAttribute('aria-busy');
