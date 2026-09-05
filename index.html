@@ -350,6 +350,9 @@
       overflow: visible;
       overflow-wrap: anywhere;
     }
+    /* Cada gap da linha custa largura que sai do nome do time — são cinco deles agora que a
+       linha ganhou estrelas. 10px → 7px devolve 15px ao nome sem colar os elementos. */
+    .card summary { gap: 7px; padding-left: 10px; padding-right: 10px; }
   }
 
   .status {
@@ -382,7 +385,150 @@
   }
   .badge.farol { color: var(--pend); border-color: color-mix(in srgb, var(--pend) 45%, var(--line)); }
   .badge.sonar, .badge.bussola { color: var(--info); border-color: color-mix(in srgb, var(--info) 45%, var(--line)); }
-  .estrelas { color: var(--pend); letter-spacing: 1px; }
+  /* ---------- estrelas de confiança ----------
+     Desenhadas em SVG, não ★/☆ do Unicode. Duas razões: a página já trocou emoji por ícone
+     desenhado uma vez (as bandeiras, 04/09), e ★ renderiza em tamanho e peso diferentes por
+     plataforma — numa fileira de cinco isso aparece como alinhamento torto. */
+  .conf {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    line-height: 0;
+  }
+  .conf svg { display: block; }
+  .conf .on { fill: var(--pend); }
+  .conf .off { fill: color-mix(in srgb, var(--fg-faint) 30%, transparent); }
+  .conf-full, .conf-mini { display: inline-flex; align-items: center; gap: 1px; }
+  .conf-mini { display: none; gap: 3px; }
+  .conf-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--pend);
+    line-height: 1;
+  }
+  /* Abaixo de 560px a fileira de cinco custa 59px de largura e o nome do time fica com 76px —
+     quebrando em até quatro linhas. Troca pela forma compacta; a informação é a mesma. */
+  @media (max-width: 560px) {
+    .conf-full { display: none; }
+    .conf-mini { display: inline-flex; }
+  }
+  /* No filtro a fileira sempre aparece inteira: ali ela É o rótulo do botão ("4 ou mais"), e o
+     botão tem largura de sobra porque não disputa espaço com nome de time. */
+  .filtro .conf-full { display: inline-flex; }
+  .filtro .conf-mini { display: none; }
+
+  /* ---------- filtro por estrelas ---------- */
+  .filtro {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 0 0 10px;
+  }
+  .filtro .rot {
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    margin-right: 2px;
+  }
+  .filtro button {
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--fg-dim);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 120ms var(--ease-out), border-color 120ms var(--ease-out), background 120ms var(--ease-out);
+  }
+  .filtro button:hover { color: var(--fg); border-color: color-mix(in srgb, var(--fg-faint) 50%, var(--line)); }
+  .filtro button:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
+  .filtro button[aria-pressed="true"] {
+    color: var(--pend);
+    border-color: color-mix(in srgb, var(--pend) 55%, var(--line));
+    background: var(--pend-dim);
+  }
+  .filtro button[aria-pressed="true"] .conf .off { fill: color-mix(in srgb, var(--pend) 28%, transparent); }
+  .filtro .contagem { color: var(--fg-faint); font-size: 10px; font-weight: 500; }
+
+  /* ---------- confronto ofensivo na linha ----------
+     Dois números crus (gols marcados médios de cada time NO PRÓPRIO LADO), não um índice novo.
+     A cor diz se cada um está acima ou abaixo da mediana do lado dele — casa e fora não
+     dividem escala (mediana 1,60 contra 1,20), então comparar os dois números entre si seria
+     ler errado. O separador some visualmente de propósito: são dois dados, não uma razão. */
+  .confronto {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--fg-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .confronto .sep { color: color-mix(in srgb, var(--fg-faint) 55%, transparent); font-weight: 400; }
+  .confronto .alto { color: var(--ok); }
+  .confronto .baixo { color: var(--fg-dim); }
+  @media (max-width: 400px) { .confronto { display: none; } }
+
+  /* ---------- perfil ofensivo/defensivo no detalhe ---------- */
+  .perfil {
+    margin-top: 9px;
+    border-top: 1px dashed var(--line);
+    padding-top: 9px;
+  }
+  .perfil-tit {
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    margin-bottom: 6px;
+  }
+  .perfil table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+  .perfil th, .perfil td { padding: 3px 4px; text-align: right; }
+  .perfil th:first-child, .perfil td:first-child { text-align: left; padding-left: 0; }
+  .perfil thead th {
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 5px;
+  }
+  .perfil tbody td { color: var(--fg); font-weight: 600; }
+  .perfil tbody th {
+    font-weight: 400;
+    color: var(--fg-dim);
+    white-space: nowrap;
+  }
+  .perfil tbody tr + tr th, .perfil tbody tr + tr td { border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
+  /* Posição do valor dentro da faixa normal DO PRÓPRIO LADO (quartis da tabela
+     referencia_perfil). Verde/vermelho aqui não é "bom/ruim" universal — é "acima/abaixo do
+     normal", e o que é bom depende da métrica: gol marcado alto é ataque forte, gol sofrido
+     alto é defesa fraca. Por isso o rótulo vem escrito ao lado, não só a cor. */
+  .perfil .q-alto { color: var(--ok); }
+  .perfil .q-baixo { color: var(--info); }
+  .perfil .cv { color: var(--fg-faint); font-weight: 400; font-size: 10px; }
+  .perfil .legenda {
+    margin-top: 7px;
+    font-size: 10px;
+    color: var(--fg-faint);
+    line-height: 1.5;
+  }
+  .perfil .sem-ref { color: var(--fg-faint); font-size: 10.5px; }
 
   .detalhe {
     /* 62px alinha com a coluna do confronto (hora 40 + gap 10 + padding 12) */
@@ -493,6 +639,7 @@
       <div class="sec-head"><h2><span class="h2-icon" style="color:var(--info)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6.1"/><path d="M10.1 5.9L8.6 8.6 5.9 10.1 7.4 7.4Z" fill="currentColor" stroke="none"/></svg></span> Bússola <span class="n" id="n-bussola"></span></h2></div>
       <p class="ajuda">Pré-jogo, 10min antes do apito, mas a entrada é ao vivo — abre a tela quando começar. Evento: over 1.5 FT. Estrelas: histórico por faixa de LG total.</p>
       <div class="placar" id="placar-bussola" hidden></div>
+      <div class="filtro" id="filtro-bussola" role="group" aria-label="Filtrar a Bússola por estrelas de confiança" hidden></div>
       <div id="lista-bussola" class="lista"><p class="carregando">Carregando…</p></div>
     </section>
 
@@ -752,10 +899,15 @@
         '<span class="hora">' + horaDeTimestamptz(j.horario_brasilia) + '</span>' +
         bandeiraHtml(j.pais) +
         '<span class="jogo">' + esc(j.mandante) + ' × ' + esc(j.visitante) + '</span>' +
+        confrontoHtml(j) +
         '<span class="status ' + s.cls + '">' + s.texto + (placar ? ' <span class="placar-num">' + placar + '</span>' : '') + '</span>' +
         '</summary><div class="detalhe-wrap"><div class="detalhe">' +
         '<div class="linha">odd casa <b>' + (j.odds_home ?? '-') + '</b> · H <b>' + (j.h_score != null ? Math.round(j.h_score) : '-') + '</b> · LG casa <b>' + (j.lg_casa != null ? Math.round(j.lg_casa) : '-') + '</b> · LG fora <b>' + (j.lg_fora != null ? Math.round(j.lg_fora) : '-') + '</b>' + (soma != null ? ' · LG total <b>' + Math.round(soma) + '</b>' : '') + '</div>' +
         metaHtml(j) +
+        // Sem estrelas aqui, de propósito: a régua é do Bússola (over 1.5 FT) e o evento desta
+        // seção é outro (a casa não perder). O perfil, sim — ele é descritivo e vale em qualquer
+        // recorte.
+        perfilHtml(j) +
         '</div></div></details>';
     }
 
@@ -777,11 +929,126 @@
       if (!faixa) return null;
       return { n: faixa.estrelas, taxa: Math.round(faixa.taxa * 100), amostra: faixa.n };
     }
+    // Fileira de 5 estrelas desenhada em SVG. `titulo` vira o title/aria-label — na linha do
+    // jogo a fileira é o único texto do indicador, então ela precisa se anunciar sozinha.
+    // ESTRELA = '<path>' do desenho, reaproveitado nas duas formas.
+    var ESTRELA_D = 'M6 .9l1.55 3.14 3.47.5-2.51 2.45.59 3.45L6 8.81 2.9 10.44l.59-3.45L.98 4.54l3.47-.5z';
+
+    // Duas formas da mesma informação, e a escolha entre elas é do CSS, não do JS (assim ela
+    // acompanha a rotação do celular sem precisar re-renderizar a lista):
+    //
+    // - fileira de 5, no desktop: a escada aparece de relance ao correr o olho pela coluna;
+    // - estrela + número, abaixo de 560px: a fileira custa 59px de largura, e medido em 375px
+    //   isso deixava só 76px para o nome do time, que passava a quebrar em até quatro linhas.
+    //   O nome é o dado que a lista existe para deixar escanear — ele ganha a disputa.
+    //
+    // `role="img"` + aria-label carregam o texto para o leitor de tela uma vez só; os dois SVGs
+    // ficam aria-hidden para a informação não ser anunciada em dobro.
+    function confHtml(n, titulo) {
+      var fileira = '';
+      for (var i = 1; i <= 5; i++) {
+        fileira += '<svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">' +
+          '<path class="' + (i <= n ? 'on' : 'off') + '" d="' + ESTRELA_D + '"/></svg>';
+      }
+      var mini = '<svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">' +
+        '<path class="on" d="' + ESTRELA_D + '"/></svg><span class="conf-num">' + n + '</span>';
+      return '<span class="conf" role="img" aria-label="' + esc(titulo) + '" title="' + esc(titulo) + '">' +
+        '<span class="conf-full">' + fileira + '</span>' +
+        '<span class="conf-mini">' + mini + '</span></span>';
+    }
     function estrelasHtml(soma) {
       var f = estrelasPara(soma);
       if (!f) return '';
-      var cheias = '★'.repeat(f.n), vazias = '☆'.repeat(5 - f.n);
-      return '<div class="linha estrelas">' + cheias + vazias + ' <span style="color:var(--fg-dim)">— histórico ' + f.taxa + '% de over 1.5 FT (n=' + f.amostra + ')</span></div>';
+      return '<div class="linha">' + confHtml(f.n, f.n + ' de 5 estrelas') +
+        ' <span style="color:var(--fg-dim)">histórico ' + f.taxa + '% de over 1.5 FT (n=' + f.amostra + ')</span></div>';
+    }
+
+    // ---------- perfil ofensivo/defensivo (migração 0040) ----------
+    // `referencia_perfil` guarda os quartis POR LADO. Casa e fora não compartilham escala —
+    // medido em 05/09: gols marcados medianos 1,60 em casa contra 1,20 fora; custo do gol 1.0
+    // mediano 3,61 em casa contra 4,29 fora. O mesmo 4,0 é ruim para um mandante e bom para um
+    // visitante, então cada valor é comparado contra a mediana do lado dele, nunca com o outro
+    // time e nunca com um limiar chumbado aqui (número escrito à mão envelhece sozinho enquanto
+    // a base cresce ~1 jogo/dia — foi a lição da régua de confiança em 02/09).
+    var REF = null;
+    async function buscarReferencia() {
+      try {
+        var res = await fetch(SUPABASE_URL + '/rest/v1/referencia_perfil?select=metrica,side,p25,mediana,p75,n', {
+          headers: { apikey: ANON_KEY, Authorization: 'Bearer ' + ANON_KEY }
+        });
+        var linhas = res.ok ? await res.json() : [];
+        REF = {};
+        linhas.forEach(function (r) { REF[r.metrica + '|' + r.side] = r; });
+      } catch (e) { REF = {}; }
+    }
+    // Devolve 'q-alto' / 'q-baixo' / '' comparando com os quartis do próprio lado.
+    function faixaDe(metrica, side, valor) {
+      if (valor == null || !REF) return '';
+      var r = REF[metrica + '|' + side];
+      if (!r || r.p25 == null || r.p75 == null) return '';
+      if (Number(valor) >= Number(r.p75)) return 'q-alto';
+      if (Number(valor) <= Number(r.p25)) return 'q-baixo';
+      return '';
+    }
+    function num(v, casas) {
+      if (v == null) return '–';
+      return Number(v).toFixed(casas == null ? 2 : casas).replace('.', ',');
+    }
+
+    // Par de gols marcados na linha do jogo: dado cru dos dois times, cada um colorido contra a
+    // mediana do PRÓPRIO lado. Não é média, razão nem índice novo — nada aqui foi medido como
+    // hipótese, é só o perfil aparecendo sem precisar abrir o card.
+    function confrontoHtml(j) {
+      var c = j.gols_pro_media_ft_casa, f = j.gols_pro_media_ft_fora;
+      if (c == null && f == null) return '';
+      var cls = function (m, side, v) { return faixaDe(m, side, v) === 'q-alto' ? 'alto' : 'baixo'; };
+      return '<span class="confronto" title="Gols marcados por jogo: mandante em casa × visitante fora (janela 10)">' +
+        '<span class="' + cls('gols_pro', 'casa', c) + '">' + num(c, 1) + '</span>' +
+        '<span class="sep">×</span>' +
+        '<span class="' + cls('gols_pro', 'fora', f) + '">' + num(f, 1) + '</span></span>';
+    }
+
+    // Tabela completa dos dois times. Cada célula traz o valor e, embaixo, o CV do mesmo campo.
+    // "CV" é desvio dividido pela média: quanto MENOR, mais o time repete o mesmo jogo. Como o
+    // termo é jargão, a legenda traduz em uma linha e o número vem rotulado.
+    var LINHAS_PERFIL = [
+      { rot: 'Gols marcados', m: 'gols_pro', cv: 'cv_gols_pro', cc: 'gols_pro_media_ft_casa', cf: 'gols_pro_media_ft_fora', vc: 'cv_gols_pro_ft_casa', vf: 'cv_gols_pro_ft_fora', casas: 2 },
+      { rot: 'Gols sofridos', m: 'gols_contra', cv: 'cv_gols_contra', cc: 'gols_contra_media_ft_casa', cf: 'gols_contra_media_ft_fora', vc: 'cv_gols_contra_ft_casa', vf: 'cv_gols_contra_ft_fora', casas: 2 },
+      { rot: 'Custo do gol 1.0', m: 'custo_gol_10', cv: 'cv_custo_gol_10', cc: 'custo_gol_10_ft_casa', cf: 'custo_gol_10_ft_fora', vc: 'cv_custo_gol_10_ft_casa', vf: 'cv_custo_gol_10_ft_fora', casas: 2 },
+      { rot: 'Custo do gol 2.0', m: 'custo_gol_20', cv: 'cv_custo_gol_20', cc: 'custo_gol_20_ft_casa', cf: 'custo_gol_20_ft_fora', vc: 'cv_custo_gol_20_ft_casa', vf: 'cv_custo_gol_20_ft_fora', casas: 2 }
+    ];
+
+    function perfilHtml(j) {
+      if (j.custo_gol_10_ft_casa == null && j.gols_pro_media_ft_casa == null) return '';
+      var corpo = LINHAS_PERFIL.map(function (L) {
+        var vc = j[L.cc], vf = j[L.cf], cc = j[L.vc], cf = j[L.vf];
+        var cel = function (valor, cvValor, side) {
+          return '<td><span class="' + faixaDe(L.m, side, valor) + '">' + num(valor, L.casas) + '</span>' +
+            (cvValor != null ? '<br><span class="cv">cv ' + num(cvValor, 2) + '</span>' : '') + '</td>';
+        };
+        return '<tr><th scope="row">' + L.rot + '</th>' + cel(vc, cc, 'casa') + cel(vf, cf, 'fora') + '</tr>';
+      }).join('');
+      var temRef = REF && Object.keys(REF).length;
+      return '<div class="perfil">' +
+        '<div class="perfil-tit">Perfil dos últimos 10 jogos</div>' +
+        '<table><thead><tr><th scope="col"></th>' +
+        '<th scope="col">' + esc(j.mandante) + ' (casa)</th>' +
+        '<th scope="col">' + esc(j.visitante) + ' (fora)</th>' +
+        '</tr></thead><tbody>' + corpo + '</tbody></table>' +
+        '<p class="legenda">' +
+        (temRef
+          ? '<span class="q-alto">Verde</span> = no quarto mais alto do próprio lado · <span class="q-baixo">azul</span> = no quarto mais baixo. ' +
+            'Casa e fora têm réguas separadas — mandante e visitante não jogam na mesma escala. '
+          : '<span class="sem-ref">Sem referência de escala ainda (a comparação por quartil aparece quando a base acumular). </span>') +
+        '<b>cv</b> mede regularidade: quanto menor, mais o time repete o mesmo jogo.<br>' +
+        // Sem esta linha, as quatro métricas parecem quatro sinais independentes — e duas delas
+        // são o mesmo sinal. Medido na base em 05/09 (n=202 por lado): custo 2.0 anda com gols
+        // marcados a 0,99 (casa) / 0,97 (fora), e o custo 1.0 é gols × odd (ver
+        // docs/2026-07-30-cadernos-sherlock.md), por isso ele sobe em time que marca muito E
+        // paga caro. Ler os quatro como confirmação cruzada seria contar o mesmo dado duas vezes.
+        '<b>Custo 2.0</b> é quase a própria média de gols (r≈0,98) — não é confirmação separada. ' +
+        '<b>Custo 1.0</b> é gols × odd: sobe com o preço, não só com o ataque.</p>' +
+        '</div>';
     }
 
     // ---------- Farol / Sonar / Bússola: uma seção por alerta, uma query por flag ----------
@@ -810,10 +1077,25 @@
       }
       if (opts.estrelas) detalhe += estrelasHtml(soma);
       detalhe += metaHtml(j);
-      return '<details class="card ' + s.cls + '"><summary>' +
+      if (opts.perfil) detalhe += perfilHtml(j);
+
+      // Estrelas na linha do jogo (pedido do usuário em 05/09: "ia ficar melhor ainda se
+      // ficasse na linha do jogo"). Só na Bússola — a régua foi MEDIDA dentro da população
+      // Bússola, e a taxa de cada degrau não vale fora dela. Ver a nota no cabeçalho da seção.
+      var estrelasLinha = '', attrEstrelas = '';
+      if (opts.estrelas) {
+        var f = estrelasPara(soma);
+        if (f) {
+          estrelasLinha = confHtml(f.n, f.n + ' de 5 estrelas — histórico ' + f.taxa + '% de over 1.5 FT');
+          attrEstrelas = ' data-estrelas="' + f.n + '"';
+        }
+      }
+      return '<details class="card ' + s.cls + '"' + attrEstrelas + '><summary>' +
         '<span class="hora">' + horaDeTimestamptz(j.horario_brasilia) + '</span>' +
         bandeiraHtml(j.pais) +
         '<span class="jogo">' + esc(j.mandante) + ' × ' + esc(j.visitante) + '</span>' +
+        (opts.confronto ? confrontoHtml(j) : '') +
+        estrelasLinha +
         '<span class="status ' + s.cls + '">' + s.texto + (placar ? ' <span class="placar-num">' + placar + '</span>' : '') + '</span>' +
         '</summary><div class="detalhe-wrap"><div class="detalhe">' + detalhe + '</div></div></details>';
     }
@@ -822,11 +1104,90 @@
     };
     var cardFarol = function (j) { return cardAoVivo(j, { placarFn: placarHtTexto }); };
     var cardSonar = function (j) { return cardAoVivo(j, { placarFn: placarHtTexto }); };
-    var cardBussola = function (j) { return cardAoVivo(j, { estrelas: true, placarFn: placarTexto }); };
+    var cardBussola = function (j) {
+      return cardAoVivo(j, { estrelas: true, perfil: true, confronto: true, placarFn: placarTexto });
+    };
+
+    // ---------- filtro por estrelas (só a Bússola) ----------
+    // Filtra no cliente, não numa query nova: as linhas do dia já estão na memória e o degrau de
+    // estrela não é coluna do banco — sai da soma dos LG cruzada com a régua, que também já está
+    // carregada. Recarregar do servidor pra esconder card seria viagem à toa.
+    //
+    // O filtro é "pelo menos N estrelas", não "exatamente N": a régua é uma escada (quanto mais
+    // estrela, maior a taxa histórica), então o que o usuário quer dizer com 4★ é "4 ou 5".
+    // Os botões escondem os cards em vez de removê-los — o placar da seção continua contando o
+    // dia inteiro, que é o número certo pra acompanhar resultado.
+    var FILTRO_ESTRELAS = 0;
+
+    function aplicarFiltroBussola() {
+      var lista = document.getElementById('lista-bussola');
+      var cards = lista.querySelectorAll('.card');
+      var visiveis = 0;
+      cards.forEach(function (c) {
+        var n = Number(c.getAttribute('data-estrelas') || 0);
+        var mostra = n >= FILTRO_ESTRELAS;
+        c.hidden = !mostra;
+        if (mostra) visiveis++;
+      });
+      var aviso = lista.querySelector('.vazio-filtro');
+      if (cards.length && !visiveis) {
+        if (!aviso) {
+          aviso = document.createElement('p');
+          aviso.className = 'vazio vazio-filtro';
+          lista.appendChild(aviso);
+        }
+        aviso.textContent = 'Nenhum jogo da Bússola com ' + FILTRO_ESTRELAS + ' estrelas ou mais hoje.';
+      } else if (aviso) {
+        aviso.remove();
+      }
+    }
+
+    function montarFiltroBussola(linhas) {
+      var box = document.getElementById('filtro-bussola');
+      // Sem régua carregada não há degrau pra filtrar — melhor não desenhar o controle do que
+      // desenhar um que não separa nada.
+      if (!linhas.length || !REGUA || !REGUA.length) { box.hidden = true; box.innerHTML = ''; return; }
+
+      var porDegrau = [0, 0, 0, 0, 0, 0];
+      linhas.forEach(function (j) {
+        var soma = (j.lg_casa != null && j.lg_fora != null) ? (Number(j.lg_casa) + Number(j.lg_fora)) : null;
+        var f = estrelasPara(soma);
+        if (f) porDegrau[f.n]++;
+      });
+      // Quantos jogos têm PELO MENOS n estrelas (é o que o botão promete).
+      var acumulado = function (n) {
+        var t = 0;
+        for (var i = n; i <= 5; i++) t += porDegrau[i];
+        return t;
+      };
+
+      var html = '<span class="rot">Confiança</span>' +
+        '<button type="button" data-min="0" aria-pressed="' + (FILTRO_ESTRELAS === 0) + '">Todas' +
+        ' <span class="contagem">' + linhas.length + '</span></button>';
+      [3, 4, 5].forEach(function (n) {
+        var q = acumulado(n);
+        if (!q) return;   // degrau sem jogo hoje: botão que só decepciona
+        html += '<button type="button" data-min="' + n + '" aria-pressed="' + (FILTRO_ESTRELAS === n) + '"' +
+          ' aria-label="' + n + ' estrelas ou mais">' + confHtml(n, n + '★ ou mais') +
+          '<span class="contagem">' + q + '</span></button>';
+      });
+      box.innerHTML = html;
+      box.hidden = false;
+
+      box.querySelectorAll('button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          FILTRO_ESTRELAS = Number(b.getAttribute('data-min'));
+          box.querySelectorAll('button').forEach(function (o) {
+            o.setAttribute('aria-pressed', String(Number(o.getAttribute('data-min')) === FILTRO_ESTRELAS));
+          });
+          aplicarFiltroBussola();
+        });
+      });
+    }
 
     // dataRef = função de evento (overHt/overFt) quando a seção tem resultado a checar; null pras
     // seções que não têm (nenhuma sobrou hoje, mas deixa genérico pra próxima).
-    async function montarSecao(id, tabela, extra, montarCard, vazioMsg, placarId, dataRef, eventoFn) {
+    async function montarSecao(id, tabela, extra, montarCard, vazioMsg, placarId, dataRef, eventoFn, posRender) {
       var el = document.getElementById(id);
       try {
         var linhas = await buscar(tabela, dataRef, extra);
@@ -836,9 +1197,11 @@
         if (placarId) renderPlacar(placarId, linhas);
         if (!linhas.length) {
           el.innerHTML = '<p class="vazio">' + vazioMsg + '</p>';
+          if (posRender) posRender(linhas);
           return;
         }
         el.innerHTML = linhas.map(montarCard).join('');
+        if (posRender) posRender(linhas);
       } catch (e) {
         el.innerHTML = '<p class="erro">Erro ao carregar: ' + esc(e.message) + '</p>';
       }
@@ -895,7 +1258,8 @@
           montarSecao('lista-sonar', 'triagem', { flag_s: 'eq.true' }, cardSonar,
             'Nenhum jogo no Sonar nesse dia.', 'placar-sonar', dataRef, overHt),
           montarSecao('lista-bussola', 'triagem', { flag_t: 'eq.true' }, cardBussola,
-            'Nenhum jogo na Bússola nesse dia.', 'placar-bussola', dataRef, overFt),
+            'Nenhum jogo na Bússola nesse dia.', 'placar-bussola', dataRef, overFt,
+            function (linhas) { montarFiltroBussola(linhas); aplicarFiltroBussola(); }),
         ]);
       } finally {
         elMain.removeAttribute('aria-busy');
@@ -919,7 +1283,9 @@
       if (alvo) alvo.scrollIntoView();
     }
 
-    buscarRegua().then(carregarDia).then(irParaHash);
+    // Régua e referência de escala são tabelas pequenas, atualizadas 1×/dia — buscadas uma vez
+    // só, em paralelo, antes das listas (os cards precisam das duas pra desenhar estrela e cor).
+    Promise.all([buscarRegua(), buscarReferencia()]).then(carregarDia).then(irParaHash);
   </script>
 </body>
 </html>
