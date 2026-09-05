@@ -456,7 +456,12 @@
     background: var(--pend-dim);
   }
   .filtro button[aria-pressed="true"] .conf .off { fill: color-mix(in srgb, var(--pend) 28%, transparent); }
-  .filtro .contagem { color: var(--fg-faint); font-size: 10px; font-weight: 500; }
+  /* O botão ativo troca o fundo para o âmbar escuro, e sobre ele o cinza da contagem cai para
+     3,85:1. Dentro do estado ativo ela herda o próprio âmbar do botão (4,65:1). */
+  .filtro button[aria-pressed="true"] .contagem { color: var(--pend); }
+  /* A contagem é informação (quantos jogos o degrau tem), não enfeite — precisa passar em
+     contraste. --fg-faint sobre o painel do botão dava 3,48:1. */
+  .filtro .contagem { color: var(--fg-dim); font-size: 10px; font-weight: 500; }
 
   /* ---------- confronto ofensivo na linha ----------
      Dois números crus (gols marcados médios de cada time NO PRÓPRIO LADO), não um índice novo.
@@ -473,7 +478,10 @@
     color: var(--fg-faint);
     font-variant-numeric: tabular-nums;
   }
-  .confronto .sep { color: color-mix(in srgb, var(--fg-faint) 55%, transparent); font-weight: 400; }
+  /* O separador era quase transparente (1,14:1) porque antes separava dois dados soltos. Agora
+     que os números são os gols esperados de cada lado, o × é o que diz que são DOIS valores e
+     não um — sem ele, "1,8 1,1" lê como um número só. Passa a --fg-faint (4,70:1). */
+  .confronto .sep { color: var(--fg-faint); font-weight: 400; }
   .confronto .alto { color: var(--ok); }
   .confronto .baixo { color: var(--fg-dim); }
   @media (max-width: 400px) { .confronto { display: none; } }
@@ -491,6 +499,58 @@
     color: var(--fg-faint);
     margin-bottom: 6px;
   }
+  /* ---------- cruzamento (gols esperados) ----------
+     O número é o herói aqui: é a leitura que separa 69,3% de 82,9% de over 1.5 FT. Fica acima da
+     tabela crua, que vira memória de cálculo. */
+  .cruz {
+    margin: 0 0 10px;
+    padding: 9px 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .cruz-lin {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    font-variant-numeric: tabular-nums;
+  }
+  .cruz-time {
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: 10.5px;
+    color: var(--fg-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cruz-time.dir { text-align: right; }
+  .cruz-num { font-size: 17px; font-weight: 700; color: var(--fg); line-height: 1.1; }
+  .cruz-sep { color: var(--fg-dim); font-size: 12px; }
+  .cruz-tot {
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+    font-size: 11px;
+    color: var(--fg-dim);
+  }
+  .cruz-tot .q-alto { color: var(--fg); font-weight: 700; }
+  .cruz-tot .q-baixo { color: var(--fg-dim); font-weight: 500; }
+  .cruz-tot .q-alto .marca { border-bottom: 4.5px solid var(--fg-faint); }
+  .cruz-tot .q-baixo .marca { border-top: 4.5px solid var(--fg-faint); }
+  .cruz-tot .marca {
+    display: inline-block;
+    width: 0; height: 0;
+    margin-left: 3px;
+    border-left: 3.5px solid transparent;
+    border-right: 3.5px solid transparent;
+  }
+  /* --fg-faint aqui dava 4,48:1 — o bloco assenta em --panel-2, que é um degrau mais claro que o
+     painel, e o mesmo cinza que passa lá reprova aqui. Um degrau acima resolve (4,96:1). A
+     hierarquia continua de pé pelo tamanho: 10px contra os 17px do número. */
+  .cruz-ref { color: var(--fg-dim); }
+  .cruz-conta { margin-top: 4px; font-size: 10px; color: var(--fg-dim); }
+
   .perfil table {
     width: 100%;
     border-collapse: collapse;
@@ -1007,17 +1067,40 @@
       return Number(v).toFixed(casas == null ? 2 : casas).replace('.', ',');
     }
 
-    // Par de gols marcados na linha do jogo: dado cru dos dois times, cada um colorido contra a
-    // mediana do PRÓPRIO lado. Não é média, razão nem índice novo — nada aqui foi medido como
-    // hipótese, é só o perfil aparecendo sem precisar abrir o card.
+    // ---------- gols esperados por cruzamento ----------
+    // Pergunta do usuário em 05/09: "essa linha não seria melhor se a gente cruzasse? gols
+    // marcados x sofridos". Seria — e foi medido antes de virar tela, em 2900 jogos com
+    // resultado (janela 10):
+    //
+    //   leitura                       1º quintil   5º quintil   amplitude
+    //   só o ataque da casa              74,8%       81,6%      6,8 pts, com inversão no 2º
+    //   ataque casa + defesa fora        74,8%       81,9%      7,1 pts, com inversão no 2º
+    //   os quatro cruzados               69,3%       82,9%      13,6 pts, escada limpa
+    //
+    // O cruzamento completo dobra a separação e é o único monotônico nos cinco degraus
+    // (z≈5,5 entre as pontas). A escala também calibra: esperado 1,52 contra 1,55 de gols reais
+    // da casa, 2,73 contra 2,83 no total do jogo.
+    //
+    // ⚠️ A correlação com o placar de UM jogo é fraca (0,195). Isto separa GRUPOS, não adivinha
+    // partida — que é exatamente o que uma lista de triagem precisa fazer.
+    function esperados(j) {
+      var ac = j.gols_pro_media_ft_casa, dc = j.gols_contra_media_ft_casa;
+      var af = j.gols_pro_media_ft_fora, df = j.gols_contra_media_ft_fora;
+      if (ac == null || dc == null || af == null || df == null) return null;
+      var casa = (Number(ac) + Number(df)) / 2;
+      var fora = (Number(af) + Number(dc)) / 2;
+      return { casa: casa, fora: fora, total: casa + fora };
+    }
+
+    // Na linha do jogo vai o par CRUZADO, não os dois ataques soltos — é a leitura que separa.
     function confrontoHtml(j) {
-      var c = j.gols_pro_media_ft_casa, f = j.gols_pro_media_ft_fora;
-      if (c == null && f == null) return '';
+      var e = esperados(j);
+      if (!e) return '';
       var cls = function (m, side, v) { return faixaDe(m, side, v) === 'q-alto' ? 'alto' : 'baixo'; };
-      return '<span class="confronto" title="Gols marcados por jogo: mandante em casa × visitante fora (janela 10)">' +
-        '<span class="' + cls('gols_pro', 'casa', c) + '">' + num(c, 1) + '</span>' +
+      return '<span class="confronto" title="Gols esperados: ataque de cada time somado à defesa do adversário, dividido por 2 (janela 10)">' +
+        '<span class="' + cls('esperado_casa', 'casa', e.casa) + '">' + num(e.casa, 1) + '</span>' +
         '<span class="sep">×</span>' +
-        '<span class="' + cls('gols_pro', 'fora', f) + '">' + num(f, 1) + '</span></span>';
+        '<span class="' + cls('esperado_fora', 'fora', e.fora) + '">' + num(e.fora, 1) + '</span></span>';
     }
 
     // Tabela completa dos dois times. Cada célula traz o valor e, embaixo, o CV do mesmo campo.
@@ -1051,8 +1134,34 @@
         return '<tr><th scope="row">' + L.rot + '</th>' + cel(vc, cc, 'casa') + cel(vf, cf, 'fora') + '</tr>';
       }).join('');
       var temRef = REF && Object.keys(REF).length;
+
+      // O cruzamento vem ANTES da tabela crua, e não depois, porque é a leitura que responde a
+      // pergunta do dia ("esse jogo tem gol?"). A tabela abaixo passa a ser a memória de cálculo:
+      // quem quiser conferir de onde saiu o 1,9 vê ataque e defesa separados logo em seguida.
+      var e = esperados(j);
+      var bloco = '';
+      if (e) {
+        var q = faixaDe('esperado_total', 'casa', e.total);
+        bloco = '<div class="cruz">' +
+          '<div class="cruz-lin">' +
+            '<span class="cruz-time">' + esc(j.mandante) + '</span>' +
+            '<span class="cruz-num">' + num(e.casa, 2) + '</span>' +
+            '<span class="cruz-sep">×</span>' +
+            '<span class="cruz-num">' + num(e.fora, 2) + '</span>' +
+            '<span class="cruz-time dir">' + esc(j.visitante) + '</span>' +
+          '</div>' +
+          '<div class="cruz-tot"><span class="' + q + '">' + num(e.total, 2) +
+            '<span class="marca" aria-hidden="true"></span></span> gols esperados no jogo' +
+            (temRef ? ' <span class="cruz-ref">· mediana do dia ' +
+              num(REF['esperado_total|casa'] ? REF['esperado_total|casa'].mediana : null, 2) + '</span>' : '') +
+          '</div>' +
+          '<div class="cruz-conta">ataque de cada time + defesa do adversário, dividido por 2</div>' +
+        '</div>';
+      }
+
       return '<div class="perfil">' +
         '<div class="perfil-tit">Perfil dos últimos 10 jogos</div>' +
+        bloco +
         '<table><thead><tr><th scope="col"></th>' +
         '<th scope="col">' + esc(j.mandante) + ' (casa)</th>' +
         '<th scope="col">' + esc(j.visitante) + ' (fora)</th>' +
