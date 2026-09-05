@@ -29,6 +29,8 @@
     --pend-dim: #3a2c0e;
     --info: #4fb6ff;
     --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    /* medido em runtime pelo JS (ResizeObserver); este valor só vale até a primeira medida */
+    --header-h: 130px;
   }
   @media (prefers-color-scheme: light) {
     :root {
@@ -52,6 +54,14 @@
     }
   }
   * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
   html { -webkit-tap-highlight-color: transparent; }
   body {
     margin: 0;
@@ -78,10 +88,10 @@
   .header-inner {
     max-width: 720px;
     margin: 0 auto;
-    padding: 18px 18px 16px;
+    padding: 14px 18px 12px;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 13px;
   }
   .blip {
     position: relative;
@@ -106,7 +116,6 @@
   }
   @keyframes varrer { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .blip::after { animation: none; } }
-  .titulo-wrap { min-width: 0; }
   h1 {
     margin: 0;
     font-size: 15px;
@@ -115,19 +124,22 @@
     text-transform: uppercase;
     color: var(--fg);
   }
-  header p {
-    margin: 3px 0 0;
+  /* A ressalva mora no fluxo do main, não no header grudado: é texto de ler uma vez. Presa lá,
+     ela quebrava em 3 linhas no celular e comia 20% da tela em toda rolagem. */
+  .ressalva {
+    margin: 16px 0 0;
     color: var(--fg-dim);
     font-size: 11.5px;
     letter-spacing: 0.02em;
+    max-width: 56ch;
   }
-  header p b { color: var(--fg); font-weight: 600; }
+  .ressalva b { color: var(--fg); font-weight: 600; }
 
   main { max-width: 720px; margin: 0 auto; padding: 0 14px; }
 
   nav.jump {
     display: flex; gap: 6px; flex-wrap: wrap;
-    padding: 14px 0 0;
+    padding: 16px 0 2px;
   }
   nav.jump a {
     color: var(--fg-dim);
@@ -137,8 +149,10 @@
     text-transform: uppercase;
     border: 1px solid var(--line);
     border-radius: 999px;
-    padding: 5px 10px;
-    display: inline-block;
+    padding: 0 12px;
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
     transition: color 150ms var(--ease-out), border-color 150ms var(--ease-out), transform 120ms var(--ease-out);
   }
   @media (hover: hover) and (pointer: fine) {
@@ -152,16 +166,16 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    padding: 10px 0 0;
+    padding: 8px 0 12px;
   }
   .dia-nav button {
     font-family: inherit;
     background: var(--panel);
     color: var(--fg);
     border: 1px solid var(--line);
-    border-radius: 7px;
-    width: 30px; height: 30px;
-    font-size: 15px;
+    border-radius: 9px;
+    width: 40px; height: 40px;
+    font-size: 17px;
     line-height: 1;
     cursor: pointer;
     transition: border-color 150ms var(--ease-out), transform 120ms var(--ease-out), opacity 150ms var(--ease-out);
@@ -188,7 +202,7 @@
     margin-top: 1px;
   }
 
-  section { margin-top: 30px; scroll-margin-top: 74px; }
+  section { margin-top: 30px; scroll-margin-top: calc(var(--header-h) + 14px); }
   .sec-head {
     display: flex;
     align-items: baseline;
@@ -228,6 +242,9 @@
     overflow: hidden;
     margin-bottom: 12px;
   }
+  /* `[hidden]` do UA e `.placar` têm a mesma especificidade, e folha do autor ganha da do
+     navegador — sem esta linha, seção sem jogo desenhava uma caixa vazia com borda. */
+  .placar[hidden] { display: none; }
   .placar .cel {
     background: var(--panel);
     padding: 9px 10px 10px;
@@ -242,6 +259,7 @@
     text-transform: uppercase;
     color: var(--fg-faint);
   }
+  .placar .pct { color: var(--fg-dim); }
   .placar .cel.pend .num { color: var(--pend); }
   .placar .cel.ok .num { color: var(--ok); }
   .placar .cel.miss .num { color: var(--miss); }
@@ -298,6 +316,15 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  /* No celular a linha não cabe e o corte engolia o nome do time — que é exatamente o dado
+     que a lista existe pra deixar escanear. Deixa quebrar em duas linhas. */
+  @media (max-width: 560px) {
+    .confronto .jogo {
+      white-space: normal;
+      overflow: visible;
+      overflow-wrap: anywhere;
+    }
+  }
   .confronto .pais {
     display: block;
     color: var(--fg-faint);
@@ -341,16 +368,34 @@
   .estrelas { color: var(--pend); letter-spacing: 1px; }
 
   .detalhe {
-    padding: 2px 12px 12px 62px;
+    /* 62px alinha com a coluna do confronto (hora 40 + gap 10 + padding 12) */
+    padding: 9px 12px 12px 62px;
     color: var(--fg-dim);
     font-size: 11.5px;
     border-top: 1px dashed var(--line);
-    margin-top: 0;
-    padding-top: 9px;
+  }
+  /* Abaixo de 420px o recuo de 62px deixava ~250px de linha útil — o alinhamento não paga
+     esse preço numa tela dessas. */
+  @media (max-width: 420px) {
+    .detalhe { padding-left: 12px; }
   }
   .detalhe b { color: var(--fg); font-weight: 600; }
   .detalhe .linha + .linha { margin-top: 3px; }
 
+  .carregando {
+    padding: 16px 4px;
+    font-size: 12px;
+    color: var(--fg-faint);
+    text-align: center;
+    margin: 0;
+  }
+  /* Troca de dia: o conteúdo do dia anterior continua na tela até o fetch voltar. Baixar a
+     opacidade é o que impede de ler dado velho como se já fosse do dia novo. */
+  main[aria-busy="true"] .lista,
+  main[aria-busy="true"] .placar {
+    opacity: 0.4;
+    transition: opacity 140ms var(--ease-out);
+  }
   .vazio, .erro {
     padding: 16px 4px;
     font-size: 12px;
@@ -376,59 +421,59 @@
   <header>
     <div class="header-inner">
       <div class="blip" aria-hidden="true"></div>
-      <div class="titulo-wrap">
-        <h1>Painel — <span id="data-hoje"></span></h1>
-        <p>fulltbet · lista de triagem, não recomendação — <b>a entrada é sua, ao vivo ou no pré-jogo</b></p>
-      </div>
+      <h1>Painel</h1>
     </div>
-    <nav class="jump" style="max-width:720px;margin:0 auto;padding-left:14px;padding-right:14px;">
+    <div class="dia-nav">
+      <button id="dia-prev" type="button" aria-label="Dia anterior">‹</button>
+      <span class="rotulo" aria-live="polite"><span id="dia-label"></span><span class="tag" id="dia-tag"></span></span>
+      <button id="dia-next" type="button" aria-label="Próximo dia">›</button>
+    </div>
+  </header>
+  <main>
+
+    <p class="ressalva">fulltbet · lista de triagem, não recomendação — <b>a entrada é sua, ao vivo ou no pré-jogo</b></p>
+
+    <nav class="jump" aria-label="Ir para a seção">
       <a href="#lay0x1">Lay 0×1</a>
       <a href="#layvis">Lay Visitante</a>
       <a href="#farol">Farol</a>
       <a href="#sonar">Sonar</a>
       <a href="#bussola">Bússola</a>
     </nav>
-    <div class="dia-nav">
-      <button id="dia-prev" type="button" aria-label="Dia anterior">‹</button>
-      <span class="rotulo"><span id="dia-label"></span><span class="tag" id="dia-tag"></span></span>
-      <button id="dia-next" type="button" aria-label="Próximo dia">›</button>
-    </div>
-  </header>
-  <main>
 
     <section id="lay0x1">
       <div class="sec-head"><h2>Lay 0×1 <span class="n" id="n-lay0x1"></span></h2></div>
       <p class="ajuda">Protocolo v1: manda de todos as 3 odds do Resultado da Partida + a linha 0×1 (back/lay). Desastre é o jogo terminar exatamente 0×1 — qualquer outro placar, bateu.</p>
       <div class="placar" id="placar-lay0x1" hidden></div>
-      <div id="lista-lay0x1" class="lista"><p class="vazio">Carregando…</p></div>
+      <div id="lista-lay0x1" class="lista"><p class="carregando">Carregando…</p></div>
     </section>
 
     <section id="layvis">
       <div class="sec-head"><h2>Lay Visitante Favorito <span class="n" id="n-layvis"></span></h2></div>
       <p class="ajuda">Pré-jogo, 15min antes do apito. Casa favorita (odds até 2,00) — lay no visitante, entra na virada do apito e segura até o fim. Evento é 1X: bateu quando a casa não perde.</p>
       <div class="placar" id="placar-layvis" hidden></div>
-      <div id="lista-layvis" class="lista"><p class="vazio">Carregando…</p></div>
+      <div id="lista-layvis" class="lista"><p class="carregando">Carregando…</p></div>
     </section>
 
     <section id="farol">
       <div class="sec-head"><h2><span class="h2-icon" style="color:var(--pend)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 1.6v1.8"/><path d="M4.6 3.6l1.3 1.3"/><path d="M11.4 3.6l-1.3 1.3"/><path d="M5.2 9a2.8 2.8 0 0 1 5.6 0c0 1.7-1.2 2.4-1.5 3.9a.85.85 0 0 1-.85.75H7.55a.85.85 0 0 1-.85-.75C6.4 11.4 5.2 10.7 5.2 9Z"/></svg></span> Farol <span class="n" id="n-farol"></span></h2></div>
       <p class="ajuda">Decisão ao vivo, com o jogo na tela — isto é registro do dia, não confirma nem manda entrar. Evento: over 0.5 HT.</p>
       <div class="placar" id="placar-farol" hidden></div>
-      <div id="lista-farol" class="lista"><p class="vazio">Carregando…</p></div>
+      <div id="lista-farol" class="lista"><p class="carregando">Carregando…</p></div>
     </section>
 
     <section id="sonar">
       <div class="sec-head"><h2><span class="h2-icon" style="color:var(--info)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="3.8" opacity="0.6"/><circle cx="8" cy="8" r="6.3" opacity="0.35"/></svg></span> Sonar <span class="n" id="n-sonar"></span></h2></div>
       <p class="ajuda">Decisão ao vivo, com o jogo na tela — isto é registro do dia, não confirma nem manda entrar. Evento: over 0.5 HT.</p>
       <div class="placar" id="placar-sonar" hidden></div>
-      <div id="lista-sonar" class="lista"><p class="vazio">Carregando…</p></div>
+      <div id="lista-sonar" class="lista"><p class="carregando">Carregando…</p></div>
     </section>
 
     <section id="bussola">
       <div class="sec-head"><h2><span class="h2-icon" style="color:var(--info)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6.1"/><path d="M10.1 5.9L8.6 8.6 5.9 10.1 7.4 7.4Z" fill="currentColor" stroke="none"/></svg></span> Bússola <span class="n" id="n-bussola"></span></h2></div>
       <p class="ajuda">Pré-jogo, 10min antes do apito, mas a entrada é ao vivo — abre a tela quando começar. Evento: over 1.5 FT. Estrelas: histórico por faixa de LG total.</p>
       <div class="placar" id="placar-bussola" hidden></div>
-      <div id="lista-bussola" class="lista"><p class="vazio">Carregando…</p></div>
+      <div id="lista-bussola" class="lista"><p class="carregando">Carregando…</p></div>
     </section>
 
   </main>
@@ -517,7 +562,8 @@
       el.hidden = false;
       el.innerHTML =
         '<div class="cel pend"><span class="num">' + pend + '</span><span class="lbl">Aguardando</span></div>' +
-        '<div class="cel ok"><span class="num">' + ok + (pct != null ? ' <span style="font-size:11px;font-weight:600;color:var(--fg-faint)">(' + pct + '%)</span>' : '') + '</span><span class="lbl">Bateu</span></div>' +
+        '<div class="cel ok"><span class="num">' + ok + '</span><span class="lbl">Bateu' +
+          (pct != null ? ' <span class="pct">' + pct + '%</span>' : '') + '</span></div>' +
         '<div class="cel miss"><span class="num">' + miss + '</span><span class="lbl">Não bateu</span></div>';
     }
 
@@ -637,6 +683,21 @@
       }
     }
 
+    // ---------- altura real do header grudado ----------
+    // O `scroll-margin-top` das seções depende dela: com valor chumbado, todo link do menu de
+    // atalho parava com o título da seção escondido atrás do header.
+    var elHeader = document.querySelector('header');
+    var elMain = document.querySelector('main');
+    var btnPrev = document.getElementById('dia-prev');
+    var btnNext = document.getElementById('dia-next');
+
+    function medirHeader() {
+      document.documentElement.style.setProperty('--header-h', elHeader.offsetHeight + 'px');
+    }
+    medirHeader();
+    if (window.ResizeObserver) new ResizeObserver(medirHeader).observe(elHeader);
+    else window.addEventListener('resize', medirHeader);
+
     // ---------- navegação de dia (hoje, ontem, anteontem — mesma janela da policy de RLS) ----------
     var HOJE = hojeBrasilia();
     function deslocarDia(dataStr, n) {
@@ -654,37 +715,50 @@
       document.getElementById('dia-label').textContent = rotulo;
       document.getElementById('dia-tag').textContent =
         dataRef === HOJE ? 'hoje' : (dataRef === deslocarDia(HOJE, -1) ? 'ontem' : 'anteontem');
-      document.getElementById('data-hoje').textContent = rotulo;
-      document.getElementById('dia-prev').disabled = (indiceAtual === 0);
-      document.getElementById('dia-next').disabled = (indiceAtual === JANELA.length - 1);
+      document.title = 'Painel ' + rotulo + ' — fulltbet';
 
-      await Promise.all([
-        montarSecao('lista-lay0x1', 'lay0x1_diario', null, cardLay0x1,
-          'Nenhum jogo passou nos filtros nesse dia (v1 e I).', 'placar-lay0x1', dataRef),
-        montarSecao('lista-layvis', 'lay_visitante_diario', null, cardLayVis,
-          'Nenhum jogo passou no recorte nesse dia.', 'placar-layvis', dataRef),
-        montarSecao('lista-farol', 'triagem', { flag_q: 'eq.true' }, cardFarol,
-          'Nenhum jogo no Farol nesse dia.', 'placar-farol', dataRef, overHt),
-        montarSecao('lista-sonar', 'triagem', { flag_s: 'eq.true' }, cardSonar,
-          'Nenhum jogo no Sonar nesse dia.', 'placar-sonar', dataRef, overHt),
-        montarSecao('lista-bussola', 'triagem', { flag_t: 'eq.true' }, cardBussola,
-          'Nenhum jogo na Bússola nesse dia.', 'placar-bussola', dataRef, overFt),
-      ]);
+      // Enquanto carrega: botão travado (dois cliques seguidos em ‹ disparavam duas cargas
+      // concorrentes) e conteúdo do dia anterior esmaecido, pra não ser lido como do dia novo.
+      elMain.setAttribute('aria-busy', 'true');
+      btnPrev.disabled = true;
+      btnNext.disabled = true;
+
+      try {
+        await Promise.all([
+          montarSecao('lista-lay0x1', 'lay0x1_diario', null, cardLay0x1,
+            'Nenhum jogo passou nos filtros nesse dia (v1 e I).', 'placar-lay0x1', dataRef),
+          montarSecao('lista-layvis', 'lay_visitante_diario', null, cardLayVis,
+            'Nenhum jogo passou no recorte nesse dia.', 'placar-layvis', dataRef),
+          montarSecao('lista-farol', 'triagem', { flag_q: 'eq.true' }, cardFarol,
+            'Nenhum jogo no Farol nesse dia.', 'placar-farol', dataRef, overHt),
+          montarSecao('lista-sonar', 'triagem', { flag_s: 'eq.true' }, cardSonar,
+            'Nenhum jogo no Sonar nesse dia.', 'placar-sonar', dataRef, overHt),
+          montarSecao('lista-bussola', 'triagem', { flag_t: 'eq.true' }, cardBussola,
+            'Nenhum jogo na Bússola nesse dia.', 'placar-bussola', dataRef, overFt),
+        ]);
+      } finally {
+        elMain.removeAttribute('aria-busy');
+        btnPrev.disabled = (indiceAtual === 0);
+        btnNext.disabled = (indiceAtual === JANELA.length - 1);
+      }
     }
 
-    document.getElementById('dia-prev').addEventListener('click', function () {
+    btnPrev.addEventListener('click', function () {
       if (indiceAtual > 0) { indiceAtual--; carregarDia(); }
     });
-    document.getElementById('dia-next').addEventListener('click', function () {
+    btnNext.addEventListener('click', function () {
       if (indiceAtual < JANELA.length - 1) { indiceAtual++; carregarDia(); }
     });
 
-    buscarRegua().then(carregarDia);
-
-    if (location.hash) {
+    // O scroll do #hash só faz sentido depois que as listas encheram — antes disso a página
+    // inteira mede cinco linhas de "Carregando…" e a posição calculada não vale nada.
+    function irParaHash() {
+      if (!location.hash) return;
       var alvo = document.querySelector(location.hash);
       if (alvo) alvo.scrollIntoView();
     }
+
+    buscarRegua().then(carregarDia).then(irParaHash);
   </script>
 </body>
 </html>
