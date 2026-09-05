@@ -515,12 +515,24 @@
     white-space: nowrap;
   }
   .perfil tbody tr + tr th, .perfil tbody tr + tr td { border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
-  /* Posição do valor dentro da faixa normal DO PRÓPRIO LADO (quartis da tabela
-     referencia_perfil). Verde/vermelho aqui não é "bom/ruim" universal — é "acima/abaixo do
-     normal", e o que é bom depende da métrica: gol marcado alto é ataque forte, gol sofrido
-     alto é defesa fraca. Por isso o rótulo vem escrito ao lado, não só a cor. */
-  .perfil .q-alto { color: var(--ok); }
-  .perfil .q-baixo { color: var(--info); }
+  /* Posição do valor dentro da faixa normal DO PRÓPRIO LADO (quartis de referencia_perfil).
+     ⚠️ NÃO usar verde/vermelho aqui, e o motivo apareceu só quando a tela foi olhada de verdade:
+     "gols sofridos 2,90" pintado de verde lê como elogio, quando o dado é defesa vazando. Pior,
+     o julgamento nem é fixo — na Bússola (over 1.5 FT) sofrer muito AJUDA o evento; no Lay
+     Visitante atrapalha. A mesma cor teria dois significados opostos em duas seções.
+     A posição é dita por PESO e por um marcador direcional; bom/ruim fica com quem lê. */
+  .perfil .q-alto { color: var(--fg); font-weight: 700; }
+  .perfil .q-baixo { color: var(--fg-dim); font-weight: 500; }
+  .perfil .marca {
+    display: inline-block;
+    width: 0; height: 0;
+    margin-left: 4px;
+    vertical-align: 1px;
+    border-left: 3.5px solid transparent;
+    border-right: 3.5px solid transparent;
+  }
+  .perfil .q-alto .marca { border-bottom: 4.5px solid var(--fg-faint); }
+  .perfil .q-baixo .marca { border-top: 4.5px solid var(--fg-faint); }
   .perfil .cv { color: var(--fg-faint); font-weight: 400; font-size: 10px; }
   .perfil .legenda {
     margin-top: 7px;
@@ -1023,7 +1035,12 @@
       var corpo = LINHAS_PERFIL.map(function (L) {
         var vc = j[L.cc], vf = j[L.cf], cc = j[L.vc], cf = j[L.vf];
         var cel = function (valor, cvValor, side) {
-          return '<td><span class="' + faixaDe(L.m, side, valor) + '">' + num(valor, L.casas) + '</span>' +
+          var q = faixaDe(L.m, side, valor);
+          // O marcador só existe nos extremos; no meio da faixa não há nada a apontar.
+          var marca = q ? '<span class="marca" aria-hidden="true"></span>' : '';
+          var titulo = q === 'q-alto' ? ' title="No quarto mais alto entre os times do mesmo lado"'
+                     : q === 'q-baixo' ? ' title="No quarto mais baixo entre os times do mesmo lado"' : '';
+          return '<td><span class="' + q + '"' + titulo + '>' + num(valor, L.casas) + marca + '</span>' +
             (cvValor != null ? '<br><span class="cv">cv ' + num(cvValor, 2) + '</span>' : '') + '</td>';
         };
         return '<tr><th scope="row">' + L.rot + '</th>' + cel(vc, cc, 'casa') + cel(vf, cf, 'fora') + '</tr>';
@@ -1037,8 +1054,12 @@
         '</tr></thead><tbody>' + corpo + '</tbody></table>' +
         '<p class="legenda">' +
         (temRef
-          ? '<span class="q-alto">Verde</span> = no quarto mais alto do próprio lado · <span class="q-baixo">azul</span> = no quarto mais baixo. ' +
-            'Casa e fora têm réguas separadas — mandante e visitante não jogam na mesma escala. '
+          // O mesmo marcador da tabela, não um ▲ do Unicode: a legenda tem de mostrar exatamente
+          // o desenho que aparece na célula, senão ela explica outra coisa.
+          ? '<span class="q-alto"><span class="marca"></span></span> quarto mais alto · ' +
+            '<span class="q-baixo"><span class="marca"></span></span> quarto mais baixo, sempre entre times do mesmo lado — ' +
+            'mandante e visitante não jogam na mesma escala. ' +
+            'Se isso é bom ou ruim depende do que você procura: sofrer muito gol ajuda um over e atrapalha um lay. '
           : '<span class="sem-ref">Sem referência de escala ainda (a comparação por quartil aparece quando a base acumular). </span>') +
         '<b>cv</b> mede regularidade: quanto menor, mais o time repete o mesmo jogo.<br>' +
         // Sem esta linha, as quatro métricas parecem quatro sinais independentes — e duas delas
