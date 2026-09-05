@@ -372,19 +372,22 @@
 
     <section id="farol">
       <div class="sec-head"><h2>🔦 Farol <span class="n" id="n-farol"></span></h2></div>
-      <p class="ajuda">Decisão ao vivo, com o jogo na tela — isto é registro do dia, não confirma nem manda entrar.</p>
+      <p class="ajuda">Decisão ao vivo, com o jogo na tela — isto é registro do dia, não confirma nem manda entrar. Evento: over 0.5 HT.</p>
+      <div class="placar" id="placar-farol" hidden></div>
       <div id="lista-farol" class="lista"><p class="vazio">Carregando…</p></div>
     </section>
 
     <section id="sonar">
       <div class="sec-head"><h2>📡 Sonar <span class="n" id="n-sonar"></span></h2></div>
-      <p class="ajuda">Decisão ao vivo, com o jogo na tela — isto é registro do dia, não confirma nem manda entrar.</p>
+      <p class="ajuda">Decisão ao vivo, com o jogo na tela — isto é registro do dia, não confirma nem manda entrar. Evento: over 0.5 HT.</p>
+      <div class="placar" id="placar-sonar" hidden></div>
       <div id="lista-sonar" class="lista"><p class="vazio">Carregando…</p></div>
     </section>
 
     <section id="bussola">
       <div class="sec-head"><h2>🧭 Bússola <span class="n" id="n-bussola"></span></h2></div>
-      <p class="ajuda">Pré-jogo, 10min antes do apito, mas a entrada é ao vivo — abre a tela quando começar. Estrelas: histórico de over 1.5 FT por faixa de LG total.</p>
+      <p class="ajuda">Pré-jogo, 10min antes do apito, mas a entrada é ao vivo — abre a tela quando começar. Evento: over 1.5 FT. Estrelas: histórico por faixa de LG total.</p>
+      <div class="placar" id="placar-bussola" hidden></div>
       <div id="lista-bussola" class="lista"><p class="vazio">Carregando…</p></div>
     </section>
 
@@ -539,8 +542,16 @@
     // Antes era uma lista só com badge por cima (OR de 4 flags) — jogo que batia só flag_p_baixo
     // sem lg_fora<100 aparecia sem badge nenhum (card "vazio"). Separar por flag elimina isso:
     // o card só existe dentro da seção do alerta que ele de fato disparou.
+    // Evento de cada alerta, calculado em cima do placar bruto (migração 0039 — triagem só
+    // guarda gols_casa/visitante_ht/ft, não um boolean por hipótese, pra servir qualquer evento
+    // futuro sem migração nova). Farol/Sonar preveem over 0.5 HT; Bússola prevê over 1.5 FT.
+    function overHt(j) { return (Number(j.gols_casa_ht || 0) + Number(j.gols_visitante_ht || 0)) >= 1; }
+    function overFt(j) { return (Number(j.gols_casa_ft || 0) + Number(j.gols_visitante_ft || 0)) >= 2; }
+
     function cardAoVivo(j, opts) {
       opts = opts || {};
+      var s = statusDe(j);
+      var placar = opts.placarFn ? opts.placarFn(j) : null;
       var soma = (j.lg_casa != null && j.lg_fora != null) ? (Number(j.lg_casa) + Number(j.lg_fora)) : null;
       var d = oddJusta(j);
       var detalhe = '<div class="linha">over0.5HT <b>' + (j.odd_ht_over ?? '-') + '</b> · LG casa <b>' +
@@ -552,20 +563,27 @@
         detalhe += '<div class="linha">odd justa 5\' <b>' + d[0] + '</b> · 10\' <b>' + d[1] + '</b> · 15\' <b>' + d[2] + '</b></div>';
       }
       if (opts.estrelas) detalhe += estrelasHtml(soma);
-      return '<details class="card"><summary>' +
+      return '<details class="card ' + s.cls + '"><summary>' +
         '<span class="hora">' + horaDeTimestamptz(j.horario_brasilia) + '</span>' +
         '<span class="confronto"><span class="jogo">' + esc(j.mandante) + ' × ' + esc(j.visitante) + '</span>' +
         '<span class="pais">' + esc(j.pais || '-') + '</span></span>' +
+        '<span class="status ' + s.cls + '">' + s.texto + (placar ? ' <span class="placar-num">' + placar + '</span>' : '') + '</span>' +
         '</summary><div class="detalhe">' + detalhe + '</div></details>';
     }
-    var cardFarol = function (j) { return cardAoVivo(j); };
-    var cardSonar = function (j) { return cardAoVivo(j); };
-    var cardBussola = function (j) { return cardAoVivo(j, { estrelas: true }); };
+    var placarHtTexto = function (j) {
+      return (j.gols_casa_ht == null || j.gols_visitante_ht == null) ? null : j.gols_casa_ht + '×' + j.gols_visitante_ht;
+    };
+    var cardFarol = function (j) { return cardAoVivo(j, { placarFn: placarHtTexto }); };
+    var cardSonar = function (j) { return cardAoVivo(j, { placarFn: placarHtTexto }); };
+    var cardBussola = function (j) { return cardAoVivo(j, { estrelas: true, placarFn: placarTexto }); };
 
-    async function montarSecao(id, tabela, extra, montarCard, vazioMsg, placarId, dataRef) {
+    // dataRef = função de evento (overHt/overFt) quando a seção tem resultado a checar; null pras
+    // seções que não têm (nenhuma sobrou hoje, mas deixa genérico pra próxima).
+    async function montarSecao(id, tabela, extra, montarCard, vazioMsg, placarId, dataRef, eventoFn) {
       var el = document.getElementById(id);
       try {
         var linhas = await buscar(tabela, dataRef, extra);
+        if (eventoFn) linhas.forEach(function (j) { if (j.has_result) j.bateu = eventoFn(j); });
         var contador = document.getElementById('n-' + id.replace('lista-', ''));
         if (contador) contador.textContent = linhas.length ? linhas.length : '';
         if (placarId) renderPlacar(placarId, linhas);
@@ -606,11 +624,11 @@
         montarSecao('lista-layvis', 'lay_visitante_diario', null, cardLayVis,
           'Nenhum jogo passou no recorte nesse dia.', 'placar-layvis', dataRef),
         montarSecao('lista-farol', 'triagem', { flag_q: 'eq.true' }, cardFarol,
-          'Nenhum jogo no Farol nesse dia.', null, dataRef),
+          'Nenhum jogo no Farol nesse dia.', 'placar-farol', dataRef, overHt),
         montarSecao('lista-sonar', 'triagem', { flag_s: 'eq.true' }, cardSonar,
-          'Nenhum jogo no Sonar nesse dia.', null, dataRef),
+          'Nenhum jogo no Sonar nesse dia.', 'placar-sonar', dataRef, overHt),
         montarSecao('lista-bussola', 'triagem', { flag_t: 'eq.true' }, cardBussola,
-          'Nenhum jogo na Bússola nesse dia.', null, dataRef),
+          'Nenhum jogo na Bússola nesse dia.', 'placar-bussola', dataRef, overFt),
       ]);
     }
 
