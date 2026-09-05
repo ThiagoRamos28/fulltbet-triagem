@@ -20,7 +20,7 @@
     --line: #212a35;
     --fg: #e7ebf0;
     --fg-dim: #7c8a9a;
-    --fg-faint: #4a5563;
+    --fg-faint: #78828f;
     --ok: #22e0a3;
     --ok-dim: #0e3a30;
     --miss: #ff5a72;
@@ -39,14 +39,14 @@
       --line: #d9d4c4;
       --fg: #1c1c18;
       --fg-dim: #5c5c52;
-      --fg-faint: #8b8a7e;
+      --fg-faint: #6e6d61;
       /* mais escuras/saturadas que no tema dark pra passar 4.5:1 em texto de 12-13px
          sobre o painel claro (lição do polish pass da página antiga, 09/08). */
-      --ok: #0e8f68;
+      --ok: #087054;
       --ok-dim: #dcf3ea;
       --miss: #c22e44;
       --miss-dim: #fbe1e5;
-      --pend: #9a6a08;
+      --pend: #8a5f06;
       --pend-dim: #f6e8c9;
       --info: #1c66c9;
     }
@@ -206,6 +206,8 @@
     margin: 0;
     display: flex; align-items: center; gap: 8px;
   }
+  .h2-icon { display: inline-flex; vertical-align: -2px; }
+  .h2-icon svg { display: block; }
   .sec-head h2 .n {
     font-weight: 500;
     color: var(--fg-faint);
@@ -222,7 +224,7 @@
     gap: 1px;
     background: var(--line);
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
     margin-bottom: 12px;
   }
@@ -248,13 +250,11 @@
   .card {
     background: var(--panel);
     border: 1px solid var(--line);
-    border-left: 3px solid var(--fg-faint);
-    border-radius: 8px;
+    border-radius: 12px;
     padding: 0;
   }
-  .card.pend { border-left-color: var(--pend); }
-  .card.ok { border-left-color: var(--ok); }
-  .card.miss { border-left-color: var(--miss); }
+  /* Status já é dito pelo chip (.status) — repetir a cor na borda esquerda era o mesmo sinal
+     duas vezes. Uma fonte de verdade por informação. */
 
   .card summary {
     list-style: none;
@@ -286,15 +286,27 @@
   }
 
   .hora { color: var(--fg-dim); font-size: 12px; min-width: 40px; flex: 0 0 auto; }
-  .confronto { flex: 1 1 auto; min-width: 0; }
+  /* flex-direction:column + display:block nos filhos — sem isso (bug encontrado no polish),
+     .jogo e .pais eram <span> inline soltos: o overflow/ellipsis não fecha caixa própria em
+     inline, o texto vazava e o badge "v1" ficava por cima do país em telas estreitas. */
+  .confronto { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
   .confronto .jogo {
+    display: block;
     font-weight: 600;
     font-size: 13px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .confronto .pais { color: var(--fg-faint); font-size: 10.5px; margin-top: 1px; }
+  .confronto .pais {
+    display: block;
+    color: var(--fg-faint);
+    font-size: 10.5px;
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
   .status {
     flex: 0 0 auto;
@@ -399,21 +411,21 @@
     </section>
 
     <section id="farol">
-      <div class="sec-head"><h2>🔦 Farol <span class="n" id="n-farol"></span></h2></div>
+      <div class="sec-head"><h2><span class="h2-icon" style="color:var(--pend)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 1.6v1.8"/><path d="M4.6 3.6l1.3 1.3"/><path d="M11.4 3.6l-1.3 1.3"/><path d="M5.2 9a2.8 2.8 0 0 1 5.6 0c0 1.7-1.2 2.4-1.5 3.9a.85.85 0 0 1-.85.75H7.55a.85.85 0 0 1-.85-.75C6.4 11.4 5.2 10.7 5.2 9Z"/></svg></span> Farol <span class="n" id="n-farol"></span></h2></div>
       <p class="ajuda">Decisão ao vivo, com o jogo na tela — isto é registro do dia, não confirma nem manda entrar. Evento: over 0.5 HT.</p>
       <div class="placar" id="placar-farol" hidden></div>
       <div id="lista-farol" class="lista"><p class="vazio">Carregando…</p></div>
     </section>
 
     <section id="sonar">
-      <div class="sec-head"><h2>📡 Sonar <span class="n" id="n-sonar"></span></h2></div>
+      <div class="sec-head"><h2><span class="h2-icon" style="color:var(--info)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="3.8" opacity="0.6"/><circle cx="8" cy="8" r="6.3" opacity="0.35"/></svg></span> Sonar <span class="n" id="n-sonar"></span></h2></div>
       <p class="ajuda">Decisão ao vivo, com o jogo na tela — isto é registro do dia, não confirma nem manda entrar. Evento: over 0.5 HT.</p>
       <div class="placar" id="placar-sonar" hidden></div>
       <div id="lista-sonar" class="lista"><p class="vazio">Carregando…</p></div>
     </section>
 
     <section id="bussola">
-      <div class="sec-head"><h2>🧭 Bússola <span class="n" id="n-bussola"></span></h2></div>
+      <div class="sec-head"><h2><span class="h2-icon" style="color:var(--info)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6.1"/><path d="M10.1 5.9L8.6 8.6 5.9 10.1 7.4 7.4Z" fill="currentColor" stroke="none"/></svg></span> Bússola <span class="n" id="n-bussola"></span></h2></div>
       <p class="ajuda">Pré-jogo, 10min antes do apito, mas a entrada é ao vivo — abre a tela quando começar. Evento: over 1.5 FT. Estrelas: histórico por faixa de LG total.</p>
       <div class="placar" id="placar-bussola" hidden></div>
       <div id="lista-bussola" class="lista"><p class="vazio">Carregando…</p></div>
