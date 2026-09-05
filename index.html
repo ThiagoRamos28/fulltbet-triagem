@@ -1023,11 +1023,16 @@
     // Tabela completa dos dois times. Cada célula traz o valor e, embaixo, o CV do mesmo campo.
     // "CV" é desvio dividido pela média: quanto MENOR, mais o time repete o mesmo jogo. Como o
     // termo é jargão, a legenda traduz em uma linha e o número vem rotulado.
+    // O custo do gol 2.0 SAIU desta lista em 05/09, por decisão do usuário depois da medida:
+    // ele anda com gols marcados a r=0,990 (casa) / 0,966 (fora), n=202 — era a linha de cima
+    // repetida. As colunas continuam no banco e continuam sendo gravadas; só não ocupam mais uma
+    // linha da tabela. No lugar entrou o primeiro tempo, que é o recorte do evento que Farol e
+    // Sonar preveem (over 0.5 HT).
     var LINHAS_PERFIL = [
-      { rot: 'Gols marcados', m: 'gols_pro', cv: 'cv_gols_pro', cc: 'gols_pro_media_ft_casa', cf: 'gols_pro_media_ft_fora', vc: 'cv_gols_pro_ft_casa', vf: 'cv_gols_pro_ft_fora', casas: 2 },
-      { rot: 'Gols sofridos', m: 'gols_contra', cv: 'cv_gols_contra', cc: 'gols_contra_media_ft_casa', cf: 'gols_contra_media_ft_fora', vc: 'cv_gols_contra_ft_casa', vf: 'cv_gols_contra_ft_fora', casas: 2 },
-      { rot: 'Custo do gol 1.0', m: 'custo_gol_10', cv: 'cv_custo_gol_10', cc: 'custo_gol_10_ft_casa', cf: 'custo_gol_10_ft_fora', vc: 'cv_custo_gol_10_ft_casa', vf: 'cv_custo_gol_10_ft_fora', casas: 2 },
-      { rot: 'Custo do gol 2.0', m: 'custo_gol_20', cv: 'cv_custo_gol_20', cc: 'custo_gol_20_ft_casa', cf: 'custo_gol_20_ft_fora', vc: 'cv_custo_gol_20_ft_casa', vf: 'cv_custo_gol_20_ft_fora', casas: 2 }
+      { rot: 'Gols marcados', m: 'gols_pro', cc: 'gols_pro_media_ft_casa', cf: 'gols_pro_media_ft_fora', vc: 'cv_gols_pro_ft_casa', vf: 'cv_gols_pro_ft_fora', casas: 2 },
+      { rot: 'Gols sofridos', m: 'gols_contra', cc: 'gols_contra_media_ft_casa', cf: 'gols_contra_media_ft_fora', vc: 'cv_gols_contra_ft_casa', vf: 'cv_gols_contra_ft_fora', casas: 2 },
+      { rot: 'Gols no 1º tempo', m: 'gols_pro_ht', cc: 'gols_media_ht_casa', cf: 'gols_media_ht_fora', vc: 'cv_gols_pro_ht_casa', vf: 'cv_gols_pro_ht_fora', casas: 2 },
+      { rot: 'Custo do gol 1.0', m: 'custo_gol_10', cc: 'custo_gol_10_ft_casa', cf: 'custo_gol_10_ft_fora', vc: 'cv_custo_gol_10_ft_casa', vf: 'cv_custo_gol_10_ft_fora', casas: 2 }
     ];
 
     function perfilHtml(j) {
@@ -1067,7 +1072,6 @@
         // marcados a 0,99 (casa) / 0,97 (fora), e o custo 1.0 é gols × odd (ver
         // docs/2026-07-30-cadernos-sherlock.md), por isso ele sobe em time que marca muito E
         // paga caro. Ler os quatro como confirmação cruzada seria contar o mesmo dado duas vezes.
-        '<b>Custo 2.0</b> é quase a própria média de gols (r≈0,98) — não é confirmação separada. ' +
         '<b>Custo 1.0</b> é gols × odd: sobe com o preço, não só com o ataque.</p>' +
         '</div>';
     }
@@ -1123,8 +1127,11 @@
     var placarHtTexto = function (j) {
       return (j.gols_casa_ht == null || j.gols_visitante_ht == null) ? null : j.gols_casa_ht + '×' + j.gols_visitante_ht;
     };
-    var cardFarol = function (j) { return cardAoVivo(j, { placarFn: placarHtTexto }); };
-    var cardSonar = function (j) { return cardAoVivo(j, { placarFn: placarHtTexto }); };
+    // Farol e Sonar ganharam o perfil em 05/09 (leem a mesma `triagem`, os campos já estavam lá).
+    // Sem estrelas: a régua é do Bússola, medida na população dele, e essas duas seções preveem
+    // outro evento (over 0.5 HT). O perfil, sim — é descritivo e vale em qualquer recorte.
+    var cardFarol = function (j) { return cardAoVivo(j, { perfil: true, confronto: true, placarFn: placarHtTexto }); };
+    var cardSonar = function (j) { return cardAoVivo(j, { perfil: true, confronto: true, placarFn: placarHtTexto }); };
     var cardBussola = function (j) {
       return cardAoVivo(j, { estrelas: true, perfil: true, confronto: true, placarFn: placarTexto });
     };
