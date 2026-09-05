@@ -509,31 +509,40 @@
     border: 1px solid var(--line);
     border-radius: 8px;
   }
-  .cruz-lin {
+  .cruz-lado + .cruz-lado { margin-top: 8px; }
+  .cruz-topo {
     display: flex;
     align-items: baseline;
-    gap: 7px;
+    justify-content: space-between;
+    gap: 8px;
     font-variant-numeric: tabular-nums;
   }
   .cruz-time {
-    flex: 1 1 0;
     min-width: 0;
-    font-size: 10.5px;
-    color: var(--fg-dim);
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--fg);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .cruz-time.dir { text-align: right; }
-  .cruz-num { font-size: 17px; font-weight: 700; color: var(--fg); line-height: 1.1; }
-  .cruz-sep { color: var(--fg-dim); font-size: 12px; }
+  .cruz-num { font-size: 17px; font-weight: 700; color: var(--fg); line-height: 1.1; flex: 0 0 auto; }
   .cruz-tot {
-    margin-top: 5px;
-    padding-top: 5px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin-top: 8px;
+    padding-top: 7px;
     border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
     font-size: 11px;
     color: var(--fg-dim);
   }
+  .cruz-tot-rot { font-size: 11px; color: var(--fg-dim); }
+  /* A referência vai para a linha de baixo inteira, alinhada à direita, para não competir com o
+     número do total nem empurrar o rótulo. */
+  .cruz-tot .cruz-ref { flex: 1 0 100%; text-align: right; font-size: 10px; }
   .cruz-tot .q-alto { color: var(--fg); font-weight: 700; }
   .cruz-tot .q-baixo { color: var(--fg-dim); font-weight: 500; }
   .cruz-tot .q-alto .marca { border-bottom: 4.5px solid var(--fg-faint); }
@@ -549,7 +558,10 @@
      painel, e o mesmo cinza que passa lá reprova aqui. Um degrau acima resolve (4,96:1). A
      hierarquia continua de pé pelo tamanho: 10px contra os 17px do número. */
   .cruz-ref { color: var(--fg-dim); }
-  .cruz-conta { margin-top: 4px; font-size: 10px; color: var(--fg-dim); }
+  /* A conta é o que responde "de onde saiu esse número" — os dois valores que entram nela vêm em
+     --fg para o olho achar na tabela abaixo, o resto fica no cinza de apoio. */
+  .cruz-conta { margin-top: 2px; font-size: 10.5px; color: var(--fg-dim); line-height: 1.45; }
+  .cruz-conta b { color: var(--fg); font-weight: 700; }
 
   .perfil table {
     width: 100%;
@@ -574,6 +586,7 @@
     color: var(--fg-dim);
     white-space: nowrap;
   }
+  .perfil .rot-eco { color: var(--fg-faint); }
   .perfil tbody tr + tr th, .perfil tbody tr + tr td { border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
   /* Posição do valor dentro da faixa normal DO PRÓPRIO LADO (quartis de referencia_perfil).
      ⚠️ NÃO usar verde/vermelho aqui, e o motivo apareceu só quando a tela foi olhada de verdade:
@@ -1111,9 +1124,14 @@
     // repetida. As colunas continuam no banco e continuam sendo gravadas; só não ocupam mais uma
     // linha da tabela. No lugar entrou o primeiro tempo, que é o recorte do evento que Farol e
     // Sonar preveem (over 0.5 HT).
+    // O "(faz)" e o "(leva)" existem para amarrar a tabela à conta do bloco de cima, que fala
+    // "1,90 que ele faz + 2,10 que o Union leva". Sem a mesma palavra nos dois lugares, achar de
+    // onde saiu o número vira caça ao tesouro entre oito células — foi exatamente o que o
+    // usuário reclamou em 05/09. O nome completo fica, porque "gols marcados/sofridos" é o
+    // vocabulário dele.
     var LINHAS_PERFIL = [
-      { rot: 'Gols marcados', m: 'gols_pro', cc: 'gols_pro_media_ft_casa', cf: 'gols_pro_media_ft_fora', vc: 'cv_gols_pro_ft_casa', vf: 'cv_gols_pro_ft_fora', casas: 2 },
-      { rot: 'Gols sofridos', m: 'gols_contra', cc: 'gols_contra_media_ft_casa', cf: 'gols_contra_media_ft_fora', vc: 'cv_gols_contra_ft_casa', vf: 'cv_gols_contra_ft_fora', casas: 2 },
+      { rot: 'Gols marcados <span class="rot-eco">(faz)</span>', m: 'gols_pro', cc: 'gols_pro_media_ft_casa', cf: 'gols_pro_media_ft_fora', vc: 'cv_gols_pro_ft_casa', vf: 'cv_gols_pro_ft_fora', casas: 2 },
+      { rot: 'Gols sofridos <span class="rot-eco">(leva)</span>', m: 'gols_contra', cc: 'gols_contra_media_ft_casa', cf: 'gols_contra_media_ft_fora', vc: 'cv_gols_contra_ft_casa', vf: 'cv_gols_contra_ft_fora', casas: 2 },
       { rot: 'Gols no 1º tempo', m: 'gols_pro_ht', cc: 'gols_media_ht_casa', cf: 'gols_media_ht_fora', vc: 'cv_gols_pro_ht_casa', vf: 'cv_gols_pro_ht_fora', casas: 2 },
       { rot: 'Custo do gol 1.0', m: 'custo_gol_10', cc: 'custo_gol_10_ft_casa', cf: 'custo_gol_10_ft_fora', vc: 'cv_custo_gol_10_ft_casa', vf: 'cv_custo_gol_10_ft_fora', casas: 2 }
     ];
@@ -1138,24 +1156,47 @@
       // O cruzamento vem ANTES da tabela crua, e não depois, porque é a leitura que responde a
       // pergunta do dia ("esse jogo tem gol?"). A tabela abaixo passa a ser a memória de cálculo:
       // quem quiser conferir de onde saiu o 1,9 vê ataque e defesa separados logo em seguida.
+      // Primeira versão punha os dois esperados lado a lado, "2,00 × 1,30", com a fórmula escrita
+      // por extenso embaixo. O usuário leu e perguntou: "por que 2,00 se embaixo tá 1,90?" —
+      // duas falhas de uma vez.
+      //
+      // 1. A conta existia mas não estava na tela. Os números que entram nela (1,90 do ataque do
+      //    Bayer e 2,10 que o Union leva) ficavam numa tabela ABAIXO, sem nada ligando um ao
+      //    outro. Dizer "ataque + defesa do adversário ÷ 2" não ajuda quem não sabe quais dos
+      //    oito números da tabela são esses dois. Agora cada lado mostra a própria conta com os
+      //    valores dentro.
+      // 2. O "×" entre dois decimais lê como multiplicação — 2,00 × 1,30 dá 2,6, e o total ao
+      //    lado dizia 3,30. Em placar "×" é "contra", mas ali estava entre duas médias. Sumiu:
+      //    cada time tem a sua linha.
+      //
+      // A linguagem é a do CLAUDE.md — "que ele faz" e "que o outro leva", não "média de gols
+      // pró e contra do adversário".
       var e = esperados(j);
       var bloco = '';
       if (e) {
         var q = faixaDe('esperado_total', 'casa', e.total);
+        var lado = function (time, adversario, valor, ataque, sofre) {
+          return '<div class="cruz-lado">' +
+            '<div class="cruz-topo">' +
+              '<span class="cruz-time">' + esc(time) + '</span>' +
+              '<span class="cruz-num">' + num(valor, 2) + '</span>' +
+            '</div>' +
+            '<div class="cruz-conta">' +
+              '<b>' + num(ataque, 2) + '</b> que ele faz + <b>' + num(sofre, 2) + '</b> que o ' +
+              esc(adversario) + ' leva, dividido por 2' +
+            '</div>' +
+          '</div>';
+        };
         bloco = '<div class="cruz">' +
-          '<div class="cruz-lin">' +
-            '<span class="cruz-time">' + esc(j.mandante) + '</span>' +
-            '<span class="cruz-num">' + num(e.casa, 2) + '</span>' +
-            '<span class="cruz-sep">×</span>' +
-            '<span class="cruz-num">' + num(e.fora, 2) + '</span>' +
-            '<span class="cruz-time dir">' + esc(j.visitante) + '</span>' +
-          '</div>' +
-          '<div class="cruz-tot"><span class="' + q + '">' + num(e.total, 2) +
-            '<span class="marca" aria-hidden="true"></span></span> gols esperados no jogo' +
-            (temRef ? ' <span class="cruz-ref">· mediana do dia ' +
+          lado(j.mandante, j.visitante, e.casa, j.gols_pro_media_ft_casa, j.gols_contra_media_ft_fora) +
+          lado(j.visitante, j.mandante, e.fora, j.gols_pro_media_ft_fora, j.gols_contra_media_ft_casa) +
+          '<div class="cruz-tot">' +
+            '<span class="cruz-tot-rot">Gols esperados no jogo</span>' +
+            '<span class="cruz-num ' + q + '">' + num(e.total, 2) +
+              '<span class="marca" aria-hidden="true"></span></span>' +
+            (temRef ? '<span class="cruz-ref">mediana do dia ' +
               num(REF['esperado_total|casa'] ? REF['esperado_total|casa'].mediana : null, 2) + '</span>' : '') +
           '</div>' +
-          '<div class="cruz-conta">ataque de cada time + defesa do adversário, dividido por 2</div>' +
         '</div>';
       }
 
