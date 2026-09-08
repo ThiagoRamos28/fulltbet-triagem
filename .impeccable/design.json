@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-08T00:00:00Z",
+  "title": "Design System: Painel — fulltbet",
+  "extensions": {
+    "colorMeta": {
+      "bg": { "role": "neutral", "displayName": "Fundo", "canonical": "#040506", "tonalRamp": ["#000000", "#040506", "#0a0d10", "#141a23", "#232a32", "#7c8894", "#c4cbd3", "#e9ecef"] },
+      "panel": { "role": "neutral", "displayName": "Painel", "canonical": "#0c0f13", "tonalRamp": ["#040506", "#0c0f13", "#10141a", "#161c24", "#232a32", "#7c8894", "#c4cbd3", "#e9ecef"] },
+      "fg": { "role": "neutral", "displayName": "Texto Primário", "canonical": "#e9ecef", "tonalRamp": ["#040506", "#232a32", "#3a4552", "#5a6674", "#7c8894", "#a3abb4", "#c4cbd3", "#e9ecef"] },
+      "ok": { "role": "success", "displayName": "Sinal Verde", "canonical": "#23e6a8", "tonalRamp": ["#0e3a30", "#11553f", "#14704f", "#188b5e", "#1ba576", "#23e6a8", "#6fedc4", "#b8f6e0"] },
+      "miss": { "role": "danger", "displayName": "Sinal Vermelho", "canonical": "#ff5a72", "tonalRamp": ["#3a1620", "#5c1d2c", "#812739", "#a72f45", "#cc3a54", "#ff5a72", "#ff96a6", "#ffcdd5"] },
+      "pend": { "role": "warning", "displayName": "Sinal Âmbar", "canonical": "#f7b53d", "tonalRamp": ["#3a2c0e", "#5c4413", "#815f19", "#a67a1f", "#cc9629", "#f7b53d", "#f9cd7c", "#fce6b8"] },
+      "info": { "role": "accent", "displayName": "Azul de Interface", "canonical": "#4fb6ff", "tonalRamp": ["#0c2a3f", "#123f5e", "#18557e", "#1e6a9d", "#2f8fc9", "#4fb6ff", "#8ed0ff", "#c7e8ff"] }
+    },
+    "typographyMeta": {
+      "title": { "displayName": "Title", "purpose": "Título de cada seção (Farol, Sonar, Bússola, Lay 0x1, Lay Visitante)." },
+      "body": { "displayName": "Body", "purpose": "Nome de confronto, texto de ajuda — texto humano, nunca número de estado." },
+      "label": { "displayName": "Label", "purpose": "Rótulo abaixo do contador, badge." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "Easing padrão de toda transição do sistema." },
+      { "name": "placar-zerado-pulse", "value": "1.6s ciclo, opacity 1 -> 0.355 -> 1", "purpose": "Estado 'seção sem jogo': dígitos piscam devagar, dispositivo do relógio nunca ajustado. Respeita prefers-reduced-motion." },
+      { "name": "duration-fast", "value": "120ms", "purpose": "Micro-feedback tátil (:active scale)." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "560px" },
+      { "name": "wide", "value": "1100px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Seven Segment Digit",
+      "kind": "custom",
+      "refersTo": "seven-segment-digit",
+      "description": "Máscara de 7 segmentos em CSS clip-path, sem fonte de terceiro. Segmento apagado é sempre a mesma forma do aceso, em cor/opacidade tênue (nunca ausente). Único vocabulário para todo número de estado da página.",
+      "html": "<span class=\"ds-seg7\"><i class=\"ds-seg7-a on\"></i><i class=\"ds-seg7-b on\"></i><i class=\"ds-seg7-c\"></i><i class=\"ds-seg7-d on\"></i><i class=\"ds-seg7-e on\"></i><i class=\"ds-seg7-f on\"></i><i class=\"ds-seg7-g on\"></i></span>",
+      "css": ".ds-seg7 { position: relative; display: inline-block; width: 14px; height: 26px; } .ds-seg7 i { position: absolute; background: currentColor; opacity: 0.26; } .ds-seg7 i.on { opacity: 1; }"
+    },
+    {
+      "name": "Status LED Trio",
+      "kind": "custom",
+      "refersTo": "status-led-trio",
+      "description": "Substitui a pílula colorida do mundo anterior — três pontos (âmbar/verde/vermelho), só o do estado atual aceso.",
+      "html": "<span class=\"ds-status-leds\" aria-label=\"Aguardando\"><i class=\"ds-led ds-led-pend on\"></i><i class=\"ds-led ds-led-ok\"></i><i class=\"ds-led ds-led-miss\"></i></span>",
+      "css": ".ds-status-leds { display: inline-flex; gap: 4px; align-items: center; } .ds-led { width: 6px; height: 6px; border-radius: 50%; background: var(--line); } .ds-led-pend.on { background: #f7b53d; } .ds-led-ok.on { background: #23e6a8; } .ds-led-miss.on { background: #ff5a72; }"
+    },
+    {
+      "name": "Confidence Bar",
+      "kind": "custom",
+      "refersTo": "confidence-cell",
+      "description": "Indicador graduado 0-5. Célula retangular alongada (10x22, não quadrada) deliberadamente distinta do LED de status. Acesa em --fg-dim (nunca âmbar), apagada reusa a cor de fantasma do sete-segmentos.",
+      "html": "<span class=\"ds-conf\"><span class=\"ds-led-cell on\"></span><span class=\"ds-led-cell on\"></span><span class=\"ds-led-cell on\"></span><span class=\"ds-led-cell\"></span><span class=\"ds-led-cell\"></span></span>",
+      "css": ".ds-conf { display: inline-flex; gap: 2px; } .ds-led-cell { display: block; width: 10px; height: 22px; border-radius: 2px; background: currentColor; opacity: 0.26; } .ds-led-cell.on { background: #7c8894; opacity: 1; }"
+    },
+    {
+      "name": "Card (jogo)",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Card colapsável de um jogo, herdado sem mudança de vocabulário do mundo anterior.",
+      "html": "<details class=\"ds-card\"><summary class=\"ds-card-summary\"><span class=\"ds-jogo\">Time A x Time B</span></summary><div class=\"ds-detalhe\">Detalhe.</div></details>",
+      "css": ".ds-card { background: #0c0f13; border: 1px solid #232a32; border-radius: 12px; color: #e9ecef; font-family: 'JetBrains Mono', monospace; } .ds-card-summary { padding: 10px 12px; cursor: pointer; }"
+    },
+    {
+      "name": "Nav Cell",
+      "kind": "nav",
+      "refersTo": "nav-cell",
+      "description": "Antiga pílula (999px) virou célula quase reta (2px) — vocabulário de sete-segmentos não tem pílula.",
+      "html": "<a class=\"ds-nav-cell\" href=\"#bussola\">Bússola</a>",
+      "css": ".ds-nav-cell { font-family: 'JetBrains Mono', monospace; color: #7c8894; text-decoration: none; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid #232a32; border-radius: 2px; padding: 0 12px; min-height: 34px; display: inline-flex; align-items: center; } .ds-nav-cell:hover { color: #e9ecef; border-color: #78828f; }"
+    },
+    {
+      "name": "Theme Toggle",
+      "kind": "custom",
+      "refersTo": "theme-toggle",
+      "description": "Ícone lua/sol desenhado, sem lib. Três estados: segue sistema (padrão), claro forçado, escuro forçado — persistido em localStorage, aplicado antes do primeiro paint.",
+      "html": "<button class=\"ds-theme-toggle\" aria-label=\"Alternar tema\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\"><path d=\"M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36A5.389 5.389 0 0 1 12 3z\"/></svg></button>",
+      "css": ".ds-theme-toggle { background: transparent; border: 1px solid #232a32; border-radius: 2px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; color: #7c8894; cursor: pointer; } .ds-theme-toggle:hover { color: #e9ecef; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "O Placar",
+    "overview": "A página lê como um placar de estádio em andamento ou um relógio de LED de posto de gasolina — não como uma cabine de avião (mundo anterior) e não como um dashboard genérico. Todo número de estado é uma máscara de sete segmentos desenhada em CSS puro, com o segmento apagado sempre desenhado como a mesma forma do aceso, só tênue — nunca ausente. O semáforo âmbar/verde/vermelho continua existindo (constraint pinado do usuário), agora como trio de LED em vez de pílula colorida. Fundo quase preto, zero box-shadow, JetBrains Mono para todo texto humano.",
+    "keyCharacteristics": [
+      "Todo número de estado é máscara de sete segmentos; texto humano continua em JetBrains Mono",
+      "Segmento apagado é sempre a mesma forma do aceso, em cor/opacidade tênue calibrada por tema",
+      "Semáforo expresso como LED (trio de pontos), não pílula com fundo tingido",
+      "Âmbar reservado exclusivamente ao status 'aguardando' — nenhum outro uso",
+      "Barra de confiança é célula alongada, deliberadamente distinta do LED de status",
+      "Tema claro/escuro com sobrescrita manual persistida (localStorage)",
+      "Zero box-shadow, zero pílula (border-radius 999px) — herança do vocabulário de sete-segmentos"
+    ],
+    "rules": [
+      { "name": "The Amber-Is-Status Rule", "body": "--pend só pode significar 'aguardando' no semáforo. Já foi quebrada duas vezes e revertida.", "section": "colors" },
+      { "name": "The Ghost-Is-Shape Rule", "body": "Segmento apagado é sempre a mesma forma do aceso, nunca removido do layout. Cor calibrada por tema separadamente.", "section": "colors" },
+      { "name": "The No-Shadow Rule", "body": "Nenhum elemento usa box-shadow. Herdada do mundo anterior.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do desenhar qualquer número de estado novo como SevenSegmentDigits, nunca como texto comum",
+      "Do calibrar a cor do fantasma por tema separadamente",
+      "Do manter JetBrains Mono para todo texto humano",
+      "Do medir altura de elementos fixos em runtime"
+    ],
+    "donts": [
+      "Don't usar âmbar fora do LED/contador de status 'aguardando'",
+      "Don't trazer border-radius: 999px de volta",
+      "Don't adicionar box-shadow",
+      "Don't desenhar a barra de confiança igual ao LED de status",
+      "Don't deixar um segmento apagado sumir do layout"
+    ]
+  }
+}
