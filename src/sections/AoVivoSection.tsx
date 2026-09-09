@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AoVivoCard } from '../components/AoVivoCard'
 import { Placar } from '../components/Placar'
 import { SectionHelp } from '../components/SectionHelp'
+import { SectionIcon, type SecaoIcone } from '../components/SectionIcon'
 import { StarFilter } from '../components/StarFilter'
 import { useSecaoData } from '../hooks/useSecaoData'
 import { estrelasPara, valorDaRegua } from '../lib/format'
@@ -9,6 +10,7 @@ import type { ReferenciaRow, ReguaRow, Secao, TriagemRow } from '../types'
 
 interface AoVivoSectionProps {
   id: string
+  icone: SecaoIcone
   titulo: string
   ajuda: string
   flag: 'flag_q' | 'flag_s' | 'flag_t'
@@ -23,7 +25,7 @@ interface AoVivoSectionProps {
 
 /** Farol, Sonar e Bússola são a mesma seção com flag/evento/régua diferentes — uma query por
  *  flag, para o card só existir dentro da seção do alerta que de fato disparou. */
-export function AoVivoSection({ id, titulo, ajuda, flag, vazioMsg, secaoRegua, eventoFn, placarFn, dataRef, regua, referencia }: AoVivoSectionProps) {
+export function AoVivoSection({ id, icone, titulo, ajuda, flag, vazioMsg, secaoRegua, eventoFn, placarFn, dataRef, regua, referencia }: AoVivoSectionProps) {
   const { linhas: brutas, carregando, erro } = useSecaoData<TriagemRow>('triagem', dataRef, { [flag]: true })
   const [min, setMin] = useState(0)
 
@@ -43,9 +45,12 @@ export function AoVivoSection({ id, titulo, ajuda, flag, vazioMsg, secaoRegua, e
   return (
     <section id={id}>
       <div className="sec-head">
-        <h2>
-          {titulo} <span className="n">{n}</span>
-        </h2>
+        <div className="sec-head-titulo">
+          <SectionIcon tipo={icone} />
+          <h2>
+            {titulo} <span className="n">{n}</span>
+          </h2>
+        </div>
         <SectionHelp>{ajuda}</SectionHelp>
       </div>
       <Placar linhas={linhas} semJogo={semJogoGenuino} />

@@ -52,8 +52,13 @@ function App() {
     <>
       <header ref={headerRef}>
         <div className="header-inner">
-          <div className="blip" aria-hidden="true" />
-          <h1>Painel</h1>
+          <svg className="compass-mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+            <circle cx="13" cy="13" r="11" fill="none" stroke="currentColor" strokeWidth="1.6" />
+            <path d="M13 4 L15.4 11.6 L13 13 L10.6 11.6 Z" fill="currentColor" />
+            <path d="M13 22 L10.6 14.4 L13 13 L15.4 14.4 Z" fill="currentColor" opacity="0.5" />
+            <circle cx="13" cy="13" r="1.6" fill="var(--bg)" stroke="currentColor" strokeWidth="1" />
+          </svg>
+          <h1>Carta de Navegação</h1>
           <ThemeToggle />
         </div>
         <DayNav rotulo={dia.rotulo} tag={dia.tag} podeVoltar={dia.podeVoltar} podeAvancar={dia.podeAvancar} onPrev={dia.prev} onNext={dia.next} />
@@ -91,6 +96,7 @@ function App() {
 
             <AoVivoSection
               id="bussola"
+              icone="bussola"
               titulo="Bússola"
               ajuda="Pré-jogo, 10min antes do apito, mas a entrada é ao vivo — abre a tela quando começar. Evento: over 1.5 FT. Estrelas: histórico por faixa de LG total."
               flag="flag_t"
@@ -108,6 +114,7 @@ function App() {
 
             <AoVivoSection
               id="farol"
+              icone="farol"
               titulo="Farol"
               ajuda="Decisão ao vivo, com o jogo na tela — isto é registro do dia, não confirma nem manda entrar. Evento: over 0.5 HT."
               flag="flag_q"
@@ -121,6 +128,7 @@ function App() {
 
             <AoVivoSection
               id="sonar"
+              icone="sonar"
               titulo="Sonar"
               ajuda="Decisão ao vivo, com o jogo na tela — isto é registro do dia, não confirma nem manda entrar. Evento: over 0.5 HT."
               flag="flag_s"

@@ -1,5 +1,3 @@
-import { SevenSegmentDigits } from './SevenSegment'
-
 export function DayNav({
   rotulo,
   tag,
@@ -21,7 +19,7 @@ export function DayNav({
         ‹
       </button>
       <span className="rotulo" aria-live="polite">
-        <SevenSegmentDigits value={rotulo} color="var(--fg)" size={15} label={rotulo} />
+        <span className="mono">{rotulo}</span>
         <span className="tag">{tag}</span>
       </span>
       <button type="button" aria-label="Próximo dia" disabled={!podeAvancar} onClick={onNext}>

@@ -1,111 +1,108 @@
-/* Design tokens + estilos globais — portados 1:1 do index.html legado (ver DESIGN.md e
-   .impeccable/design.json). Nenhuma cor, espaçamento ou raio foi "melhorado": são os mesmos
-   valores hex/px do sistema incumbente. */
+/* Design tokens + estilos globais — mundo "Carta de Navegação" (instrumentos náuticos: carta
+   envelhecida, tinta marinho, latão). Escolhido no canvas de direções em 09/09 porque os nomes
+   das seções já SÃO instrumentos de navegação (Bússola, Farol, Sonar) — a estética abraça isso
+   de propósito, em vez do "O Placar" anterior (placar de estádio/sete segmentos). Os NOMES das
+   variáveis CSS abaixo continuam os do mundo anterior (--fg, --pend, --ok, --miss, --panel...)
+   de propósito: vários componentes (StatusPill, AoVivoCard, Placar, DayNav) leem esses tokens
+   via `var(--x)` inline — trocar o valor e manter o nome evita reescrever esse fiapo de React
+   por uma mudança que é só de pele. */
 :root {
-  color-scheme: dark light;
-  /* Fundo quase preto — placar de estádio, não cabine de dashboard. */
-  --bg: #040506;
-  --bg-grid: #0a0d10;
-  --panel: #0c0f13;
-  --panel-2: #10141a;
-  --line: #232a32;
-  --fg: #e9ecef;
-  --fg-dim: #7c8894;
-  --fg-faint: #78828f;
-  --ok: #23e6a8;
-  --ok-dim: #0e3a30;
-  --miss: #ff5a72;
-  --miss-dim: #3a1620;
-  --pend: #f7b53d;
-  --pend-dim: #3a2c0e;
-  --info: #4fb6ff;
+  color-scheme: light dark;
+  /* Carta envelhecida — papel, não terminal. */
+  --bg: #f1e7cd;
+  --bg-grid: #e9dcb8;
+  --panel: #faf3e1;
+  --panel-2: #f3e9cf;
+  --line: #c7b788;
+  --line-strong: #a8955f;
+  --fg: #1c2b39;
+  --fg-dim: #5c6d78;
+  --fg-faint: #746f52;
+  --brass: #8a6a24;
+  --brass-light: #c9a552;
+  --brass-dim: #e7d9ae;
+  --ok: #1f6f5c;
+  --ok-dim: #dfe9de;
+  --miss: #9c2b2b;
+  --miss-dim: #f2ded9;
+  --pend: #8a6a24;
+  --pend-dim: #efe3c2;
+  --info: #1c5f8a;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   /* medido em runtime pelo JS (ResizeObserver); este valor só vale até a primeira medida */
-  --header-h: 130px;
-  /* fantasma do segmento apagado: no escuro a própria opacidade baixa sobre currentColor já lê
-     como "mesma forma, tênue" (o painel de trás é quase preto). No claro isso lê como sujeira —
-     por isso o fantasma ganha COR PRÓPRIA por tema (não opacidade genérica herdada do escuro),
-     correção nº2 do review de acabamento. Dark segue currentColor bem tênue; light usa a MESMA
-     cor de borda estrutural (`--line`) que já separa card/painel no resto do sistema — ela some
-     quase no painel de fundo, então o fantasma lê como "traço apagado", nunca como "quase a
-     mesma cor do dígito aceso" (2ª correção, review de verdicto: `#c8c2ae` opaco tinha contraste
-     alto o bastante pra ser confundido com o segmento aceso e o dígito virava outro número —
-     "07" lendo como "08" — bug de leitura, não só estética). No escuro, o segundo verdict pass
-     achou o oposto: 0.16 ficava quase invisível na barra de confiança (lia como "3 células" em
-     vez de "3 de 5") — subido pra 0.26, tênue o bastante pra não ser confundido com aceso, forte
-     o bastante pra contar como célula. */
-  --seg-ghost-color: currentColor;
-  --seg-ghost-op: 0.26;
+  --header-h: 156px;
   /* container de conteúdo: 720px é a coluna única (mobile/tablet ampliado); acima de
      --wide-bp a página ganha uma segunda coluna de seções em vez de só esticar texto. */
   --content-max: 720px;
 }
-/* Tema claro: segue prefers-color-scheme quando o usuário não escolheu nada (nenhum
-   data-theme no <html>); o toggle manual (ThemeToggle.tsx) fixa data-theme e vence a media
-   query nos dois sentidos, blocos abaixo. */
-@media (prefers-color-scheme: light) {
+/* Tema escuro: "carta noturna" — convenção náutica real de preservar visão noturna (luz âmbar/
+   vermelha fraca sobre quase-preto, nunca branco puro), não um dark mode genérico de dashboard.
+   Segue prefers-color-scheme quando o usuário não escolheu nada; o toggle manual (ThemeToggle.tsx)
+   fixa data-theme e vence a media query nos dois sentidos, blocos abaixo. */
+@media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']):not([data-theme='dark']) {
-    --bg: #f2f0e8;
-    --bg-grid: #ece9df;
-    --panel: #fffdf8;
-    --panel-2: #f7f4ec;
-    --line: #d9d4c4;
-    --fg: #1c1c18;
-    --fg-dim: #5c5c52;
-    --fg-faint: #6e6d61;
-    /* mais escuras/saturadas que no tema dark pra passar 4.5:1 em texto de 12-13px
-       sobre o painel claro (lição do polish pass da página antiga, 09/08). */
-    --ok: #087054;
-    --ok-dim: #dcf3ea;
-    --miss: #c22e44;
-    --miss-dim: #fbe1e5;
-    --pend: #8a5f06;
-    --pend-dim: #f6e8c9;
-    --info: #1c66c9;
-    /* fantasma no claro, 4ª calibração: `--line` sólida (100%) lia como MANCHA dentro do dígito
-       aceso — o usuário achou que parecia sombra/sujeira, testando ao vivo. Misturado com o
-       painel (45% de --line) pra quase sumir de verdade, não só "mais fraco que o aceso". */
-    --seg-ghost-color: color-mix(in srgb, var(--line) 45%, var(--panel));
-    --seg-ghost-op: 1;
+    --bg: #0a0d10;
+    --bg-grid: #0d1216;
+    --panel: #12171c;
+    --panel-2: #161c22;
+    --line: #2b3138;
+    --line-strong: #3d4650;
+    --fg: #e8dfc2;
+    --fg-dim: #a89f86;
+    --fg-faint: #7a7565;
+    --brass: #d1a94a;
+    --brass-light: #e8c876;
+    --brass-dim: #3a2f14;
+    --ok: #3ea888;
+    --ok-dim: #123329;
+    --miss: #e2646a;
+    --miss-dim: #3a1418;
+    --pend: #d1a94a;
+    --pend-dim: #3a2f14;
+    --info: #5fa8d8;
   }
 }
 :root[data-theme='light'] {
-  --bg: #f2f0e8;
-  --bg-grid: #ece9df;
-  --panel: #fffdf8;
-  --panel-2: #f7f4ec;
-  --line: #d9d4c4;
-  --fg: #1c1c18;
-  --fg-dim: #5c5c52;
-  --fg-faint: #6e6d61;
-  --ok: #087054;
-  --ok-dim: #dcf3ea;
-  --miss: #c22e44;
-  --miss-dim: #fbe1e5;
-  --pend: #8a5f06;
-  --pend-dim: #f6e8c9;
-  --info: #1c66c9;
-  --seg-ghost-color: color-mix(in srgb, var(--line) 45%, var(--panel));
-  --seg-ghost-op: 1;
+  --bg: #f1e7cd;
+  --bg-grid: #e9dcb8;
+  --panel: #faf3e1;
+  --panel-2: #f3e9cf;
+  --line: #c7b788;
+  --line-strong: #a8955f;
+  --fg: #1c2b39;
+  --fg-dim: #5c6d78;
+  --fg-faint: #746f52;
+  --brass: #8a6a24;
+  --brass-light: #c9a552;
+  --brass-dim: #e7d9ae;
+  --ok: #1f6f5c;
+  --ok-dim: #dfe9de;
+  --miss: #9c2b2b;
+  --miss-dim: #f2ded9;
+  --pend: #8a6a24;
+  --pend-dim: #efe3c2;
+  --info: #1c5f8a;
 }
 :root[data-theme='dark'] {
-  --bg: #040506;
-  --bg-grid: #0a0d10;
-  --panel: #0c0f13;
-  --panel-2: #10141a;
-  --line: #232a32;
-  --fg: #e9ecef;
-  --fg-dim: #7c8894;
-  --fg-faint: #78828f;
-  --ok: #23e6a8;
-  --ok-dim: #0e3a30;
-  --miss: #ff5a72;
-  --miss-dim: #3a1620;
-  --pend: #f7b53d;
-  --pend-dim: #3a2c0e;
-  --info: #4fb6ff;
-  --seg-ghost-color: currentColor;
-  --seg-ghost-op: 0.26;
+  --bg: #0a0d10;
+  --bg-grid: #0d1216;
+  --panel: #12171c;
+  --panel-2: #161c22;
+  --line: #2b3138;
+  --line-strong: #3d4650;
+  --fg: #e8dfc2;
+  --fg-dim: #a89f86;
+  --fg-faint: #7a7565;
+  --brass: #d1a94a;
+  --brass-light: #e8c876;
+  --brass-dim: #3a2f14;
+  --ok: #3ea888;
+  --ok-dim: #123329;
+  --miss: #e2646a;
+  --miss-dim: #3a1418;
+  --pend: #d1a94a;
+  --pend-dim: #3a2f14;
+  --info: #5fa8d8;
 }
 * {
   box-sizing: border-box;
@@ -126,13 +123,37 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(ellipse 900px 400px at 50% -10%, var(--bg-grid), transparent),
+    radial-gradient(ellipse 900px 460px at 50% -12%, var(--bg-grid), transparent),
     var(--bg);
   color: var(--fg);
-  font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  font-family: 'Public Sans', system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.45;
   padding-bottom: 64px;
+}
+/* ---------- vocabulário tipográfico ----------
+   Serif (Petrona) pra contexto — nome de time, título de seção; mono (IBM Plex Mono) pra todo
+   número calculado — hora, placar, odd, confiança; sans (Public Sans, herdado do body) pro resto
+   (rótulo, texto corrido). A troca de família é o que faz o dado "saltar" sem precisar de mais
+   cor. */
+h1,
+.jogo,
+.serif {
+  font-family: 'Petrona', Georgia, serif;
+}
+.hora,
+.placar-num,
+.status-score,
+.confronto,
+.perfil table,
+.cruz-num,
+.cruz-tot,
+.conf-num,
+.badge,
+.dia-nav .rotulo .mono,
+.detalhe .linha b,
+.cruz-conta b {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
 }
 
@@ -143,56 +164,43 @@ header {
   z-index: 10;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 2px solid var(--line-strong);
+  overflow: hidden;
 }
-.header-inner {
-  max-width: var(--content-max);
-  margin: 0 auto;
-  padding: 14px 18px 12px;
-  display: flex;
-  align-items: center;
-  gap: 13px;
-}
-.blip {
-  position: relative;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  border: 1.5px solid var(--ok);
-}
-.blip::before,
-.blip::after {
+/* Rosa dos ventos gravada, quase invisível, no canto do cabeçalho — textura de carta náutica,
+   não decoração isolada. */
+header::before {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: 50%;
+  right: -34px;
+  top: -38px;
+  width: 150px;
+  height: 150px;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: radial-gradient(circle, transparent 56%, var(--fg) 56.6%, var(--fg) 58%, transparent 58.6%),
+    radial-gradient(circle, transparent 39%, var(--fg) 39.6%, var(--fg) 40.6%, transparent 41.2%);
 }
-.blip::before {
-  margin: 6px;
-  background: var(--ok);
-  border-radius: 50%;
+.header-inner {
+  position: relative;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 16px 18px 12px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
 }
-.blip::after {
-  background: conic-gradient(from 0deg, transparent 0deg, color-mix(in srgb, var(--ok) 55%, transparent) 40deg, transparent 90deg);
-  animation: varrer 3.2s linear infinite;
-}
-@keyframes varrer {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .blip::after {
-    animation: none;
-  }
+/* Marca da bússola no lugar do blip de radar — instrumento parado, não sinal ao vivo piscando;
+   o "vivo" da página já é comunicado pelos LEDs de status de cada jogo. */
+.compass-mark {
+  flex: 0 0 auto;
+  color: var(--brass);
 }
 h1 {
   margin: 0;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   color: var(--fg);
   flex: 1 1 auto;
 }
@@ -205,8 +213,8 @@ h1 {
   justify-content: center;
   background: transparent;
   color: var(--fg-dim);
-  border: 1px solid var(--line);
-  border-radius: 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
   cursor: pointer;
   transition:
     color 150ms var(--ease-out),
@@ -216,7 +224,7 @@ h1 {
 @media (hover: hover) and (pointer: fine) {
   .tema-toggle:hover {
     color: var(--fg);
-    border-color: var(--fg-faint);
+    border-color: var(--brass);
   }
 }
 .tema-toggle:focus-visible {
@@ -226,18 +234,17 @@ h1 {
 .tema-toggle:active {
   transform: scale(0.92);
 }
-/* A ressalva mora no fluxo do main, não no header grudado: é texto de ler uma vez. Presa lá,
-   ela quebrava em 3 linhas no celular e comia 20% da tela em toda rolagem. */
+/* A ressalva mora no fluxo do main, não no header grudado: é texto de ler uma vez. */
 .ressalva {
   margin: 16px 0 0;
   color: var(--fg-dim);
   font-size: 11.5px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   max-width: 56ch;
 }
 .ressalva b {
   color: var(--fg);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 main {
@@ -246,39 +253,28 @@ main {
   padding: 0 14px;
 }
 
-/* Duas colunas no desktop foram tentadas (correção nº8 do review de acabamento) e revertidas —
-   o usuário testou ao vivo e preferiu tudo empilhado numa coluna só, mesmo em telas largas,
-   igual ao mobile. `display: contents` nos dois wrappers faz eles desaparecerem do fluxo em
-   qualquer largura, então a ordem visual é sempre a ordem do JSX em App.tsx (Lay 0×1, Bússola,
-   Lay Visitante, Farol, Sonar — a mesma ordem do nav.jump). Histórico de tentativas de coluna
-   dupla (CSS Grid com linhas compartilhadas abrindo buracos, `column-count` convergindo pro
-   mesmo desbalanço) fica só como nota para não repetir, não como código vivo. */
 .secoes,
 .secoes-col {
   display: contents;
 }
 
-/* Agora vive dentro do <header> (sticky), não em <main> — precisa da mesma centralização e
-   padding horizontal de `.header-inner`/`main`, senão esticaria de ponta a ponta da viewport em
-   vez de alinhar com o conteúdo abaixo. */
 nav.jump {
+  position: relative;
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: 0 18px 12px;
+  padding: 0 18px 14px;
 }
 nav.jump a {
-  color: var(--fg-dim);
+  color: var(--fg-faint);
   text-decoration: none;
-  font-size: 11px;
-  letter-spacing: 0.05em;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  /* Célula reta da grade de segmento, não pílula de dashboard — mesmo canto pequeno usado no
-     resto do sistema (cards, cruz, badge). Nenhum border-radius: 999px sobrevive no primeiro
-     viewport (correção nº1 do review de acabamento). */
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 2px;
   padding: 0 12px;
   min-height: 34px;
@@ -287,17 +283,19 @@ nav.jump a {
   transition:
     color 150ms var(--ease-out),
     border-color 150ms var(--ease-out),
+    background 150ms var(--ease-out),
     transform 120ms var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
   nav.jump a:hover {
-    color: var(--fg);
-    border-color: var(--fg-faint);
+    color: var(--brass);
+    border-color: var(--brass);
+    background: var(--brass-dim);
   }
 }
 nav.jump a:focus-visible {
   color: var(--fg);
-  border-color: var(--fg-faint);
+  border-color: var(--brass);
 }
 nav.jump a:active {
   transform: scale(0.94);
@@ -311,14 +309,14 @@ nav.jump a:active {
   padding: 8px 0 12px;
 }
 .dia-nav button {
-  font-family: inherit;
+  font-family: 'IBM Plex Mono', monospace;
   background: var(--panel);
   color: var(--fg);
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  width: 40px;
-  height: 40px;
-  font-size: 17px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  width: 30px;
+  height: 30px;
+  font-size: 15px;
   line-height: 1;
   cursor: pointer;
   transition:
@@ -332,7 +330,7 @@ nav.jump a:active {
 }
 @media (hover: hover) and (pointer: fine) {
   .dia-nav button:not(:disabled):hover {
-    border-color: var(--fg-faint);
+    border-color: var(--brass);
   }
 }
 .dia-nav button:not(:disabled):active {
@@ -342,19 +340,16 @@ nav.jump a:active {
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.04em;
   min-width: 122px;
   text-align: center;
 }
-.dia-nav .rotulo .seg7-grupo {
-  justify-content: center;
-}
 .dia-nav .rotulo .tag {
   display: block;
+  font-family: 'Public Sans', sans-serif;
   font-size: 9.5px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--fg-faint);
@@ -373,29 +368,36 @@ section {
   margin-bottom: 8px;
   flex-wrap: wrap;
 }
+.sec-head-titulo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.sec-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-self: center;
+  color: var(--brass);
+}
 .sec-head h2 {
-  font-size: 13px;
+  font-family: 'Petrona', Georgia, serif;
+  font-size: 18px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--fg);
   margin: 0;
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
 }
 .sec-head h2 .n {
+  font-family: 'Public Sans', sans-serif;
   font-weight: 500;
-  /* Contagem de seção não é sinal de estado — âmbar fica só pro semáforo real (correção nº5). */
-  color: var(--fg-dim);
+  color: var(--fg-faint);
   font-size: 11px;
   letter-spacing: 0;
   text-transform: none;
 }
-/* Explicação da seção — recolhida atrás de um ícone "i" por padrão (o parágrafo sempre visível
-   em toda seção lia como poluição visual, achado testando ao vivo). `flex-basis: 100%` quando
-   aberto faz o texto quebrar pra linha de baixo dentro do `.sec-head` flex, em vez de espremer
-   ao lado do título. */
 .ajuda {
   flex: 0 0 auto;
 }
@@ -417,7 +419,7 @@ section {
 }
 .ajuda summary:hover,
 .ajuda summary:focus-visible {
-  color: var(--fg);
+  color: var(--brass);
 }
 .ajuda p {
   color: var(--fg-dim);
@@ -431,9 +433,9 @@ section {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  background: var(--line-strong);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
   overflow: hidden;
   margin-bottom: 12px;
 }
@@ -445,12 +447,15 @@ section {
   padding: 10px 10px 10px;
   text-align: center;
 }
-.placar .cel .seg7-grupo {
-  justify-content: center;
+.placar .placar-num {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
 }
 .placar .lbl {
   display: block;
   margin-top: 6px;
+  font-family: 'Public Sans', sans-serif;
   font-size: 9.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -459,14 +464,12 @@ section {
 .placar .pct {
   color: var(--fg-dim);
 }
-/* Estado "zerado/nunca ajustado" — dispositivo canônico do relógio despertador que pisca 12:00
-   quando nunca foi acertado. Usado só quando a seção genuinamente não tem jogo nenhum no dia,
-   pra não ficar visualmente idêntico ao placar ainda carregando (correção nº7 do review de
-   acabamento). `prefers-reduced-motion` já zera toda animação globalmente (topo deste arquivo). */
+/* Estado "zerado/nunca ajustado" — pisca devagar quando a seção genuinamente não tem jogo,
+   pra não ficar visualmente idêntico ao placar ainda carregando. */
 .placar-zerado .cel {
-  animation: seg7-pisca 1.6s ease-in-out infinite;
+  animation: carta-pisca 1.6s ease-in-out infinite;
 }
-@keyframes seg7-pisca {
+@keyframes carta-pisca {
   0%,
   100% {
     opacity: 1;
@@ -484,11 +487,9 @@ section {
 .card {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 0;
 }
-/* Status já é dito pelo chip (.status) — repetir a cor na borda esquerda era o mesmo sinal
-   duas vezes. Uma fonte de verdade por informação. */
 
 .card summary {
   list-style: none;
@@ -505,14 +506,18 @@ section {
 .card summary:focus-visible {
   outline: 2px solid var(--info);
   outline-offset: -2px;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 .card summary:active {
   transform: scale(0.995);
 }
+/* Aberto: destaque de latão, como um item marcado na carta — mesmo tratamento do card expandido
+   no canvas de direções. */
+.card[open] {
+  border-color: var(--brass);
+  box-shadow: 0 2px 0 var(--brass-dim);
+}
 
-/* Abrir/fechar animado — <details> nativo troca de estado sem transição. O truque: um wrapper
-   com grid-template-rows 0fr→1fr, controlado pelo seletor [open]. */
 .card > .detalhe-wrap {
   display: grid !important;
   grid-template-rows: 0fr;
@@ -547,6 +552,7 @@ section {
 }
 .bandeira-txt {
   flex: 0 0 auto;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -560,12 +566,11 @@ section {
   flex: 1 1 auto;
   min-width: 0;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* No celular a linha não cabe e o corte engolia o nome do time — deixa quebrar em duas linhas. */
 @media (max-width: 560px) {
   .jogo {
     white-space: normal;
@@ -579,9 +584,8 @@ section {
   }
 }
 
-/* Status já não é pílula colorida — é um trio de LEDs (âmbar/verde/vermelho) sempre desenhado,
-   só o do estado atual acende, mais um rótulo neutro. A cor mora só no LED: repeti-la no texto
-   seria o mesmo sinal duas vezes (ver The One Signal Rule, DESIGN.md). */
+/* ---------- status: trio de LEDs (âmbar/verde/vermelho), sempre desenhado, só o do estado
+   atual acende — cor mora só no LED, o rótulo de texto é neutro. */
 .status {
   flex: 0 0 auto;
   display: inline-flex;
@@ -596,9 +600,9 @@ section {
 .status-leds .led {
   width: 7px;
   height: 7px;
-  border-radius: 2px;
+  border-radius: 50%;
   background: var(--led-cor);
-  opacity: 0.16;
+  opacity: 0.18;
   transition:
     opacity 160ms var(--ease-out),
     box-shadow 160ms var(--ease-out);
@@ -608,6 +612,7 @@ section {
   box-shadow: 0 0 5px 0 var(--led-cor);
 }
 .status-txt {
+  font-family: 'Public Sans', sans-serif;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -619,39 +624,29 @@ section {
   font-size: 10px;
   font-weight: 700;
   color: var(--fg-dim);
-  font-variant-numeric: tabular-nums;
 }
 
 .badge {
   flex: 0 0 auto;
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   padding: 3px 7px;
-  border-radius: 5px;
-  border: 1px solid var(--line);
+  border-radius: 3px;
+  border: 1px solid var(--line-strong);
   color: var(--fg-dim);
   white-space: nowrap;
 }
 .badge.farol {
-  /* Badge "v1"/"v1+I" não é sinal de estado — âmbar fica reservado ao semáforo real e ao
-     contador "aguardando" do placar (correção nº5 do review de acabamento). */
-  color: var(--fg-dim);
-  border-color: var(--line);
+  color: var(--brass);
+  border-color: var(--brass);
+  background: var(--brass-dim);
 }
-.badge.sonar,
-.badge.bussola {
-  color: var(--info);
-  border-color: color-mix(in srgb, var(--info) 45%, var(--line));
-}
-/* ---------- confiança (estrelas SVG, 1-5) ----------
-   Revertido do bargraph de células pro vocabulário original de estrela: o bargraph passou por
-   três rodadas de revisão de acabamento (achou problema de contraste, depois de peso visual) e
-   mesmo corrigido o usuário achou pior que a estrela na revisão ao vivo — "as estrelas eram
-   melhores". Desenhadas em SVG, nunca ★/☆ Unicode (peso/tamanho variam por plataforma, desalinha
-   a fileira). Âmbar aqui não viola a Amber-Is-Status Rule do DESIGN.md: a silhueta de estrela
-   nunca se confunde com o LED de status (formas diferentes) — o problema do bargraph era a forma
-   retangular repetir a do LED, não a cor em si. */
+
+/* ---------- confiança (âncoras SVG, 1-5) ----------
+   Vocabulário próprio da direção "instrumentos de navegação" no lugar da estrela do mundo
+   anterior — mesma API de componente (ConfidenceStars.tsx), só o glifo interno mudou de estrela
+   pra âncora. Desenhada em SVG, nunca glifo Unicode (peso/tamanho variam por plataforma). */
 .conf {
   flex: 0 0 auto;
   display: inline-flex;
@@ -673,7 +668,7 @@ section {
   display: block;
 }
 .conf svg.on {
-  fill: var(--pend);
+  fill: var(--brass);
 }
 .conf svg.off {
   fill: color-mix(in srgb, var(--fg-faint) 30%, transparent);
@@ -681,7 +676,7 @@ section {
 .conf-num {
   font-size: 11px;
   font-weight: 700;
-  color: var(--pend);
+  color: var(--brass);
   line-height: 1;
 }
 @media (max-width: 560px) {
@@ -699,7 +694,7 @@ section {
   display: none;
 }
 
-/* ---------- filtro por estrelas ---------- */
+/* ---------- filtro por confiança ---------- */
 .filtro {
   display: flex;
   align-items: center;
@@ -708,6 +703,7 @@ section {
   margin: 0 0 10px;
 }
 .filtro .rot {
+  font-family: 'Public Sans', sans-serif;
   font-size: 9.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -715,13 +711,12 @@ section {
   margin-right: 2px;
 }
 .filtro button {
-  font-family: inherit;
+  font-family: 'Public Sans', sans-serif;
   font-size: 11px;
   font-weight: 600;
   color: var(--fg-dim);
   background: var(--panel);
-  border: 1px solid var(--line);
-  /* mesma célula reta do resto da grade de segmento — ver nav.jump acima e correção nº1. */
+  border: 1px solid var(--line-strong);
   border-radius: 2px;
   padding: 5px 10px;
   cursor: pointer;
@@ -734,25 +729,24 @@ section {
     background 120ms var(--ease-out);
 }
 .filtro button:hover {
-  color: var(--fg);
-  border-color: color-mix(in srgb, var(--fg-faint) 50%, var(--line));
+  color: var(--brass);
+  border-color: var(--brass);
 }
 .filtro button:focus-visible {
   outline: 2px solid var(--info);
   outline-offset: 2px;
 }
-/* Selecionado é estado de FILTRO, não de status — âmbar fica reservado ao semáforo real
-   (LED de status e o contador "aguardando" do placar). Aqui vira destaque neutro (correção
-   nº5 do review de acabamento). */
 .filtro button[aria-pressed='true'] {
-  color: var(--fg);
-  border-color: var(--fg-faint);
-  background: var(--panel-2);
+  color: var(--brass);
+  border-color: var(--brass);
+  background: var(--brass-dim);
+  font-weight: 700;
 }
 .filtro button[aria-pressed='true'] .contagem {
-  color: var(--fg);
+  color: var(--brass);
 }
 .filtro .contagem {
+  font-family: 'IBM Plex Mono', monospace;
   color: var(--fg-dim);
   font-size: 10px;
   font-weight: 500;
@@ -767,7 +761,6 @@ section {
   font-size: 11px;
   font-weight: 600;
   color: var(--fg-faint);
-  font-variant-numeric: tabular-nums;
 }
 .confronto .sep {
   color: var(--fg-faint);
@@ -788,10 +781,11 @@ section {
 /* ---------- perfil ofensivo/defensivo no detalhe ---------- */
 .perfil {
   margin-top: 9px;
-  border-top: 1px dashed var(--line);
+  border-top: 1px dashed var(--line-strong);
   padding-top: 9px;
 }
 .perfil-tit {
+  font-family: 'Public Sans', sans-serif;
   font-size: 9.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -804,7 +798,7 @@ section {
   padding: 9px 10px;
   background: var(--panel-2);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
 }
 .cruz-lado + .cruz-lado {
   margin-top: 8px;
@@ -814,11 +808,11 @@ section {
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  font-variant-numeric: tabular-nums;
 }
 .cruz-time {
+  font-family: 'Petrona', Georgia, serif;
   min-width: 0;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--fg);
   overflow: hidden;
@@ -840,11 +834,12 @@ section {
   gap: 4px 8px;
   margin-top: 8px;
   padding-top: 7px;
-  border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--line-strong) 60%, transparent);
   font-size: 11px;
   color: var(--fg-dim);
 }
 .cruz-tot-rot {
+  font-family: 'Public Sans', sans-serif;
   font-size: 11px;
   color: var(--fg-dim);
 }
@@ -862,7 +857,7 @@ section {
   font-weight: 500;
 }
 .cruz-tot .q-alto .marca {
-  border-bottom: 4.5px solid var(--fg-faint);
+  border-bottom: 4.5px solid var(--brass);
 }
 .cruz-tot .q-baixo .marca {
   border-top: 4.5px solid var(--fg-faint);
@@ -876,10 +871,12 @@ section {
   border-right: 3.5px solid transparent;
 }
 .cruz-ref {
+  font-family: 'Public Sans', sans-serif;
   color: var(--fg-dim);
 }
 .cruz-conta {
   margin-top: 2px;
+  font-family: 'Public Sans', sans-serif;
   font-size: 10.5px;
   color: var(--fg-dim);
   line-height: 1.45;
@@ -893,7 +890,6 @@ section {
   width: 100%;
   border-collapse: collapse;
   font-size: 11px;
-  font-variant-numeric: tabular-nums;
 }
 .perfil th,
 .perfil td {
@@ -906,12 +902,13 @@ section {
   padding-left: 0;
 }
 .perfil thead th {
+  font-family: 'Public Sans', sans-serif;
   font-size: 9.5px;
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--fg-faint);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--line-strong);
   padding-bottom: 5px;
 }
 .perfil tbody td {
@@ -919,6 +916,7 @@ section {
   font-weight: 600;
 }
 .perfil tbody th {
+  font-family: 'Public Sans', sans-serif;
   font-weight: 400;
   color: var(--fg-dim);
   white-space: nowrap;
@@ -928,7 +926,7 @@ section {
 }
 .perfil tbody tr + tr th,
 .perfil tbody tr + tr td {
-  border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--line-strong) 55%, transparent);
 }
 .perfil .q-alto {
   color: var(--fg);
@@ -948,7 +946,7 @@ section {
   border-right: 3.5px solid transparent;
 }
 .perfil .q-alto .marca {
-  border-bottom: 4.5px solid var(--fg-faint);
+  border-bottom: 4.5px solid var(--brass);
 }
 .perfil .q-baixo .marca {
   border-top: 4.5px solid var(--fg-faint);
@@ -959,6 +957,7 @@ section {
   font-size: 10px;
 }
 .perfil .legenda {
+  font-family: 'Public Sans', sans-serif;
   margin-top: 7px;
   font-size: 10px;
   color: var(--fg-faint);
@@ -973,8 +972,9 @@ section {
   /* 62px alinha com a coluna do confronto (hora 40 + gap 10 + padding 12) */
   padding: 9px 12px 12px 62px;
   color: var(--fg-dim);
+  font-family: 'Public Sans', sans-serif;
   font-size: 11.5px;
-  border-top: 1px dashed var(--line);
+  border-top: 1px dashed var(--line-strong);
 }
 @media (max-width: 420px) {
   .detalhe {
@@ -983,7 +983,7 @@ section {
 }
 .detalhe b {
   color: var(--fg);
-  font-weight: 600;
+  font-weight: 700;
 }
 .detalhe .linha + .linha {
   margin-top: 3px;
@@ -1000,7 +1000,6 @@ section {
   text-align: center;
   margin: 0;
 }
-/* Troca de dia: o conteúdo do dia anterior continua na tela até o fetch voltar. */
 .lista[aria-busy='true'],
 main[aria-busy='true'] .lista,
 main[aria-busy='true'] .placar {
@@ -1012,102 +1011,21 @@ main[aria-busy='true'] .placar {
   padding: 16px 4px;
   font-size: 12px;
   color: var(--fg-faint);
-  border: 1px dashed var(--line);
+  border: 1px dashed var(--line-strong);
   border-radius: 8px;
   text-align: center;
 }
 .erro {
   color: var(--miss);
-  border-color: color-mix(in srgb, var(--miss) 40%, var(--line));
+  border-color: color-mix(in srgb, var(--miss) 40%, var(--line-strong));
 }
 
 footer {
   max-width: var(--content-max);
   margin: 40px auto 0;
   padding: 16px 14px 0;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--line-strong);
   color: var(--fg-faint);
   font-size: 10.5px;
-  letter-spacing: 0.02em;
-}
-
-/* ---------- dígito de sete segmentos ----------
-   Todo número de ESTADO (contador do placar, data do cabeçalho, placar final) vira essa máscara
-   — desenhada em clip-path puro, nenhuma fonte de terceiro (nada de DSEG7). O segmento apagado
-   nunca é removido: é a MESMA forma do aceso, só em opacidade baixa (`i` sem `.on`) — ver THESIS
-   em .impeccable/surfaces/src-app-tsx.md. Nome de time, rótulo e texto corrido continuam em
-   JetBrains Mono normal, isso aqui é só pra número que representa estado. */
-.seg7-grupo {
-  display: inline-flex;
-  align-items: center;
-  line-height: 0;
-}
-.seg7-digito {
-  position: relative;
-  display: inline-block;
-  width: calc(var(--seg-size) * 0.58);
-  height: var(--seg-size);
-  margin: 0 calc(var(--seg-size) * 0.05);
-}
-.seg7-digito i {
-  position: absolute;
-  background: var(--seg-ghost-color);
-  opacity: var(--seg-ghost-op);
-  transition:
-    background 160ms var(--ease-out),
-    opacity 160ms var(--ease-out);
-}
-.seg7-digito i.on {
-  background: currentColor;
-  opacity: 1;
-}
-.seg7-glifo {
-  display: inline-block;
-  font-weight: 700;
-  line-height: 1;
-  padding: 0 0.08em;
-  vertical-align: middle;
-}
-/* horizontais: a (topo), g (meio), d (base) — hexágono apontado nas pontas */
-.seg7-a,
-.seg7-g,
-.seg7-d {
-  left: calc(var(--seg-size) * 0.08);
-  width: calc(100% - var(--seg-size) * 0.16);
-  height: calc(var(--seg-size) * 0.13);
-  clip-path: polygon(9% 0%, 91% 0%, 100% 50%, 91% 100%, 9% 100%, 0% 50%);
-}
-.seg7-a {
-  top: 0;
-}
-.seg7-g {
-  top: calc(50% - var(--seg-size) * 0.065);
-}
-.seg7-d {
-  bottom: 0;
-}
-/* verticais: f/b (metade de cima), e/c (metade de baixo) — hexágono apontado em cima/embaixo */
-.seg7-f,
-.seg7-b,
-.seg7-e,
-.seg7-c {
-  width: calc(var(--seg-size) * 0.13);
-  height: calc(50% - var(--seg-size) * 0.09);
-  clip-path: polygon(0% 9%, 50% 0%, 100% 9%, 100% 91%, 50% 100%, 0% 91%);
-}
-.seg7-f,
-.seg7-b {
-  top: calc(var(--seg-size) * 0.08);
-}
-.seg7-e,
-.seg7-c {
-  bottom: calc(var(--seg-size) * 0.08);
-}
-.seg7-f,
-.seg7-e {
-  left: 0;
-}
-.seg7-b,
-.seg7-c {
-  right: 0;
+  letter-spacing: 0.01em;
 }

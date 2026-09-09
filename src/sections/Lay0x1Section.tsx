@@ -3,6 +3,7 @@ import { GameCard } from '../components/GameCard'
 import { Meta } from '../components/Meta'
 import { Placar } from '../components/Placar'
 import { SectionHelp } from '../components/SectionHelp'
+import { SectionIcon } from '../components/SectionIcon'
 import { StatusPill } from '../components/StatusPill'
 import { useSecaoData } from '../hooks/useSecaoData'
 import { horaDeNaive, placarTexto, statusDe } from '../lib/format'
@@ -42,9 +43,12 @@ export function Lay0x1Section({ dataRef }: { dataRef: string }) {
   return (
     <section id="lay0x1">
       <div className="sec-head">
-        <h2>
-          Lay 0×1 <span className="n">{n}</span>
-        </h2>
+        <div className="sec-head-titulo">
+          <SectionIcon tipo="lay0x1" />
+          <h2>
+            Lay 0×1 <span className="n">{n}</span>
+          </h2>
+        </div>
         <SectionHelp>
           Protocolo v1: manda de todos as 3 odds do Resultado da Partida + a linha 0×1 (back/lay). Desastre é o jogo terminar
           exatamente 0×1 — qualquer outro placar, bateu.

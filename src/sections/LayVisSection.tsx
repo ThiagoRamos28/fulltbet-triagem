@@ -6,6 +6,7 @@ import { Meta } from '../components/Meta'
 import { Perfil } from '../components/Perfil'
 import { Placar } from '../components/Placar'
 import { SectionHelp } from '../components/SectionHelp'
+import { SectionIcon } from '../components/SectionIcon'
 import { StarFilter } from '../components/StarFilter'
 import { StatusPill } from '../components/StatusPill'
 import { useSecaoData } from '../hooks/useSecaoData'
@@ -92,9 +93,12 @@ export function LayVisSection({
   return (
     <section id="layvis">
       <div className="sec-head">
-        <h2>
-          Lay Visitante Favorito <span className="n">{n}</span>
-        </h2>
+        <div className="sec-head-titulo">
+          <SectionIcon tipo="layvis" />
+          <h2>
+            Lay Visitante Favorito <span className="n">{n}</span>
+          </h2>
+        </div>
         <SectionHelp>
           Pré-jogo, 15min antes do apito. Casa favorita (odds até 2,00) — lay no visitante, entra na virada do apito e segura
           até o fim. Evento é 1X: bateu quando a casa não perde.
