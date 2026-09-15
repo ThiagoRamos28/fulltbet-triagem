@@ -73,7 +73,6 @@ function App() {
           <a href="#bussola">Bússola</a>
           <a href="#layvis">Lay Visitante</a>
           <a href="#farol">Farol</a>
-          <a href="#sonar">Sonar</a>
         </nav>
       </header>
       <main ref={mainRef}>
@@ -87,9 +86,10 @@ function App() {
             `.secoes`/`.secoes-col` continuam no JSX (display: contents sempre, não fazem nada
             visualmente) só pra não reescrever a árvore de componentes por uma mudança que pode
             ir e voltar de novo. A ORDEM aqui é a ordem visual real, e bate com o nav.jump (Lay
-            0x1, Bússola, Lay Visitante, Farol, Sonar) — não é mais a ordem original do produto
+            0x1, Bússola, Lay Visitante, Farol) — não é mais a ordem original do produto
             (Lay0x1, LayVisitante, Farol, Sonar, Bússola), ficou assim do experimento de colunas
-            e não houve motivo pra desfazer ao reverter só o CSS. */}
+            e não houve motivo pra desfazer ao reverter só o CSS. Sonar saiu da página em
+            2026-09-15 (reprovado por dado — ver docs/hipoteses-congeladas). */}
         <div className="secoes">
           <div className="secoes-col">
             <Lay0x1Section dataRef={dia.dataRef} />
@@ -119,20 +119,6 @@ function App() {
               ajuda="Decisão ao vivo, com o jogo na tela — isto é registro do dia, não confirma nem manda entrar. Evento: over 0.5 HT."
               flag="flag_q"
               vazioMsg="Nenhum jogo no Farol nesse dia."
-              eventoFn={overHt}
-              placarFn={placarHtTexto}
-              dataRef={dia.dataRef}
-              regua={regua}
-              referencia={referencia}
-            />
-
-            <AoVivoSection
-              id="sonar"
-              icone="sonar"
-              titulo="Sonar"
-              ajuda="Decisão ao vivo, com o jogo na tela — isto é registro do dia, não confirma nem manda entrar. Evento: over 0.5 HT."
-              flag="flag_s"
-              vazioMsg="Nenhum jogo no Sonar nesse dia."
               eventoFn={overHt}
               placarFn={placarHtTexto}
               dataRef={dia.dataRef}

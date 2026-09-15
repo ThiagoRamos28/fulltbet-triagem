@@ -1,9 +1,10 @@
-export type SecaoIcone = 'lay0x1' | 'bussola' | 'layvis' | 'farol' | 'sonar'
+export type SecaoIcone = 'lay0x1' | 'bussola' | 'layvis' | 'farol'
 
 /** Ícone de instrumento ao lado do título de cada seção — a direção "Carta de Navegação" (canvas
  *  de 09/09) usa os próprios nomes das seções como pretexto: Bússola vira bússola de verdade,
- *  Farol vira farol, Sonar vira sonar. Lay 0×1 e Lay Visitante não têm instrumento homônimo,
- *  ganharam um ícone genérico de rumo/proteção coerente com o resto do traço (stroke, não fill). */
+ *  Farol vira farol. Lay 0×1 e Lay Visitante não têm instrumento homônimo, ganharam um ícone
+ *  genérico de rumo/proteção coerente com o resto do traço (stroke, não fill). Sonar (sinal
+ *  próprio, ícone incluso) saiu em 2026-09-15, reprovado por dado. */
 export function SectionIcon({ tipo }: { tipo: SecaoIcone }) {
   const common = {
     width: 18,
@@ -30,16 +31,6 @@ export function SectionIcon({ tipo }: { tipo: SecaoIcone }) {
         <svg {...common}>
           <path d="M9 21h6M10 21V9h4v12M8 9l1.2-5h5.6L16 9M12 2v2" />
           <path d="M16.5 8 L22 5.5 M16.5 8 L22 8 M16.5 8 L22 10.5" opacity="0.55" />
-        </svg>
-      )
-      break
-    case 'sonar':
-      svg = (
-        <svg {...common}>
-          <path d="M12 3v6M12 21v-3M12 12l6-3.5" />
-          <circle cx="12" cy="12" r="9" opacity="0.5" />
-          <circle cx="12" cy="12" r="5" opacity="0.75" />
-          <circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none" />
         </svg>
       )
       break

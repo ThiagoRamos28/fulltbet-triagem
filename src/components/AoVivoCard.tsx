@@ -7,7 +7,7 @@ import { StatusPill } from './StatusPill'
 import { estrelasPara, horaDeTimestamptz, oddJusta, statusDe, valorDaRegua } from '../lib/format'
 import type { ReferenciaRow, ReguaRow, Secao, TriagemRow } from '../types'
 
-/** Card compartilhado por Farol, Sonar e Bússola — a única diferença entre as três seções é
+/** Card compartilhado por Farol e Bússola — a única diferença entre as seções é
  *  `regua` (só a Bússola tem estrela própria) e a função de placar (HT nas duas primeiras, FT na
  *  Bússola). Espelha `cardAoVivo` do index.html legado. */
 export function AoVivoCard({

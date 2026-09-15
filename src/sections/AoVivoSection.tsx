@@ -23,7 +23,7 @@ interface AoVivoSectionProps {
   referencia: Record<string, ReferenciaRow> | null
 }
 
-/** Farol, Sonar e Bússola são a mesma seção com flag/evento/régua diferentes — uma query por
+/** Farol e Bússola são a mesma seção com flag/evento/régua diferentes — uma query por
  *  flag, para o card só existir dentro da seção do alerta que de fato disparou. */
 export function AoVivoSection({ id, icone, titulo, ajuda, flag, vazioMsg, secaoRegua, eventoFn, placarFn, dataRef, regua, referencia }: AoVivoSectionProps) {
   const { linhas: brutas, carregando, erro } = useSecaoData<TriagemRow>('triagem', dataRef, { [flag]: true })

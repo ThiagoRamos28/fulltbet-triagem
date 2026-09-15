@@ -13,7 +13,7 @@ interface LinhaPerfil {
 }
 
 // O custo do gol 2.0 saiu da lista (redundante com gols marcados, r=0,99). Primeiro tempo entrou
-// no lugar — é o recorte do evento que Farol e Sonar preveem (over 0.5 HT).
+// no lugar — é o recorte do evento que o Farol prevê (over 0.5 HT).
 const LINHAS_PERFIL: LinhaPerfil[] = [
   { rot: 'Gols marcados', eco: '(faz)', m: 'gols_pro', cc: 'gols_pro_media_ft_casa', cf: 'gols_pro_media_ft_fora', vc: 'cv_gols_pro_ft_casa', vf: 'cv_gols_pro_ft_fora', casas: 2 },
   { rot: 'Gols sofridos', eco: '(leva)', m: 'gols_contra', cc: 'gols_contra_media_ft_casa', cf: 'gols_contra_media_ft_fora', vc: 'cv_gols_contra_ft_casa', vf: 'cv_gols_contra_ft_fora', casas: 2 },

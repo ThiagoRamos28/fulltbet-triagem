@@ -38,7 +38,9 @@ export interface PerfilFields {
   cv_custo_gol_10_ft_fora?: number | null
 }
 
-/** `triagem` — Farol, Sonar e Bússola, uma flag por seção (flag_q/flag_s/flag_t). */
+/** `triagem` — Farol e Bússola têm seção própria na página (flag_q/flag_t). `flag_s` (Sonar)
+ *  continua na tabela, ainda usado pelo Radar/Sextante no alerta ao vivo, mas Sonar em si foi
+ *  descontinuado por dado em 2026-09-15 (ver docs/hipoteses-congeladas) e saiu da página. */
 export interface TriagemRow extends JogoBase, PerfilFields {
   horario_brasilia: string // timestamptz
   odd_ht_over?: number | null

@@ -55,7 +55,7 @@ export function placarHtTexto(j: { gols_casa_ht?: number | null; gols_visitante_
   return `${j.gols_casa_ht}×${j.gols_visitante_ht}`
 }
 
-/** Evento de cada alerta, calculado em cima do placar bruto. Farol/Sonar preveem over 0.5 HT;
+/** Evento de cada alerta, calculado em cima do placar bruto. Farol prevê over 0.5 HT;
  *  Bússola prevê over 1.5 FT. */
 export function overHt(j: { gols_casa_ht?: number | null; gols_visitante_ht?: number | null }): boolean {
   return Number(j.gols_casa_ht || 0) + Number(j.gols_visitante_ht || 0) >= 1
